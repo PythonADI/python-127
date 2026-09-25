@@ -1,7 +1,7 @@
 # A tiny receipt calculator using only variables, types, and operators.
 
 item = "Coffee"
-price = 4.5
+price = 9
 quantity = 3
 
 total = price * quantity
