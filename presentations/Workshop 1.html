@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 1 — Getting Started with Python</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 11vw;
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  .slide.active {
+    display: flex;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide.active { transition: none; }
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 4.2vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    max-width: 18ch;
+    margin-bottom: 36px;
+  }
+  p.body {
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 46ch;
+  }
+  p.body b {
+    font-weight: 600;
+  }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2.2em 2.4em;
+    max-width: 60ch;
+    width: fit-content;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(18px, 2vw, 24px);
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  table {
+    border-collapse: collapse;
+    max-width: 60ch;
+  }
+  th, td {
+    text-align: left;
+    padding: 14px 28px 14px 0;
+    font-size: clamp(18px, 2vw, 24px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  td code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+
+  #dots {
+    position: fixed;
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--divider);
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+  .dot.on {
+    background: var(--accent);
+    transform: scale(1.3);
+  }
+</style>
+</head>
+<body>
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 1</div>
+  <h1>Getting Started<br>with Python</h1>
+</section>
+
+<section class="slide">
+  <h2>How does a computer work?</h2>
+  <p class="body">A computer runs on hardware and software. The CPU repeats one cycle, millions of times a second: <b>fetch</b>, <b>decode</b>, <b>execute</b>.</p>
+</section>
+
+<section class="slide">
+  <h2>What is programming?</h2>
+  <p class="body">A computer only understands very simple instructions. We write <b>source code</b> in a language people can read, and the computer translates it into instructions it can run.</p>
+</section>
+
+<section class="slide">
+  <h2>What is Python?</h2>
+  <p class="body">A high-level, interpreted, general-purpose programming language. It hides hardware details, and your code runs directly through the interpreter — no separate compile step.</p>
+</section>
+
+<section class="slide">
+  <h2>Your first program</h2>
+  <pre><code># This line prints a greeting
+print("Hello, World!")</code></pre>
+</section>
+
+<section class="slide">
+  <h2>The console</h2>
+  <p class="body">A text-based way to run programs, instead of clicking through a graphical interface.</p>
+  <pre style="margin-top: 28px;"><code>python workshop_1/calc.py</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Variables</h2>
+  <p class="body">A name that refers to a value stored in memory.</p>
+  <pre style="margin-top: 28px;"><code>age = 25
+name = "Ada"</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Data types</h2>
+  <table>
+    <tr><th>Type</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><code>int</code></td><td>whole number</td><td><code>42</code></td></tr>
+    <tr><td><code>float</code></td><td>decimal number</td><td><code>3.14</code></td></tr>
+    <tr><td><code>str</code></td><td>text</td><td><code>"hello"</code></td></tr>
+    <tr><td><code>bool</code></td><td>true/false</td><td><code>True</code></td></tr>
+  </table>
+</section>
+
+<section class="slide">
+  <h2>Why data types matter</h2>
+  <pre><code>age = 25
+print("Age: " + age)
+# TypeError: can only concatenate str (not "int") to str</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Type casting</h2>
+  <p class="body">Convert between types explicitly, and Python stops guessing.</p>
+  <pre style="margin-top: 28px;"><code>age = 25
+print("Age: " + str(age))  # works</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Operators</h2>
+  <table>
+    <tr><th>Operator</th><th>Meaning</th><th>Example</th><th>Result</th></tr>
+    <tr><td><code>%</code></td><td>modulo</td><td><code>7 % 2</code></td><td><code>1</code></td></tr>
+    <tr><td><code>**</code></td><td>exponent</td><td><code>2 ** 3</code></td><td><code>8</code></td></tr>
+    <tr><td><code>==</code></td><td>equal</td><td><code>3 == 3</code></td><td><code>True</code></td></tr>
+  </table>
+</section>
+
+<section class="slide">
+  <h2>Next up</h2>
+  <p class="body">Run the examples in <code class="inline">workshop_1/</code>. Your homework is in <code class="inline">python-127-homework-1</code>.</p>
+</section>
+
+<div id="dots"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' on' : '');
+    dotsContainer.appendChild(dot);
+  });
+  const dots = document.querySelectorAll('.dot');
+
+  function show(i) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('on');
+    current = (i + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('on');
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') show(current + 1);
+    if (e.key === 'ArrowLeft') show(current - 1);
+  });
+  document.addEventListener('click', () => show(current + 1));
+</script>
+
+</body>
+</html>
