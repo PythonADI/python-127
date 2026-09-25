@@ -27,7 +27,7 @@
     display: none;
     flex-direction: column;
     justify-content: center;
-    padding: 8vh 11vw;
+    padding: 8vh 9vw;
     opacity: 0;
     transform: scale(0.98);
   }
@@ -39,6 +39,21 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .slide.active { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
   }
 
   .title-slide {
@@ -57,19 +72,18 @@
     line-height: 1.05;
   }
   h2 {
-    font-size: clamp(34px, 4.2vw, 56px);
+    font-size: clamp(34px, 3.6vw, 52px);
     font-weight: 700;
     letter-spacing: -0.015em;
     line-height: 1.1;
-    max-width: 18ch;
-    margin-bottom: 36px;
+    margin-bottom: 28px;
   }
   p.body {
-    font-size: clamp(22px, 2.4vw, 30px);
+    font-size: clamp(20px, 2vw, 26px);
     font-weight: 400;
     color: var(--text-primary);
     line-height: 1.5;
-    max-width: 46ch;
+    max-width: 34ch;
   }
   p.body b {
     font-weight: 600;
@@ -85,27 +99,27 @@
   pre {
     background: var(--code-bg);
     border-radius: 18px;
-    padding: 2.2em 2.4em;
-    max-width: 60ch;
+    padding: 2em 2.2em;
     width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
   }
   pre code {
     font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-    font-size: clamp(18px, 2vw, 24px);
-    line-height: 1.6;
+    font-size: inherit;
+    line-height: 1.65;
     color: var(--text-primary);
-    white-space: pre-wrap;
-    word-break: break-word;
+    white-space: pre;
   }
 
   table {
     border-collapse: collapse;
-    max-width: 60ch;
   }
   th, td {
     text-align: left;
-    padding: 14px 28px 14px 0;
-    font-size: clamp(18px, 2vw, 24px);
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
     border-bottom: 1px solid var(--divider);
   }
   th {
@@ -114,6 +128,68 @@
   }
   td code {
     font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+
+  /* Fetch / decode / execute stage pills (How does a computer work?) */
+  .stages {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .stage {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .stage .pill {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(20px, 1.8vw, 28px);
+    font-weight: 600;
+    background: var(--code-bg);
+    border-radius: 999px;
+    padding: 18px 36px;
+    min-width: 220px;
+    text-align: center;
+  }
+  .stage .arrow {
+    color: var(--divider);
+    font-size: 28px;
+  }
+  .stage:last-child .arrow { visibility: hidden; }
+
+  /* Pipeline (What is programming?) */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pipeline .step {
+    font-size: clamp(18px, 1.6vw, 24px);
+    color: var(--text-secondary);
+    padding: 14px 0;
+  }
+  .pipeline .step.emphasis {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  .pipeline .down {
+    color: var(--divider);
+    font-size: 22px;
+    padding-left: 2px;
+  }
+
+  /* Trait pills (What is Python?) */
+  .traits {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .trait {
+    font-size: clamp(20px, 1.8vw, 26px);
+    font-weight: 600;
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 22px;
   }
 
   #dots {
@@ -144,73 +220,150 @@
   <h1>Getting Started<br>with Python</h1>
 </section>
 
-<section class="slide">
-  <h2>How does a computer work?</h2>
-  <p class="body">A computer runs on hardware and software. The CPU repeats one cycle, millions of times a second: <b>fetch</b>, <b>decode</b>, <b>execute</b>.</p>
+<section class="slide split">
+  <div class="content-col">
+    <h2>How does a computer work?</h2>
+    <p class="body">The CPU repeats one cycle, millions of times a second.</p>
+  </div>
+  <div class="visual-col">
+    <div class="stages">
+      <div class="stage"><div class="pill">Fetch</div><div class="arrow">↓</div></div>
+      <div class="stage"><div class="pill">Decode</div><div class="arrow">↓</div></div>
+      <div class="stage"><div class="pill">Execute</div><div class="arrow">↓</div></div>
+    </div>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>What is programming?</h2>
-  <p class="body">A computer only understands very simple instructions. We write <b>source code</b> in a language people can read, and the computer translates it into instructions it can run.</p>
+<section class="slide split">
+  <div class="content-col">
+    <h2>What is programming?</h2>
+    <p class="body">A computer only understands very simple instructions. We write <b>source code</b> in a language people can read.</p>
+  </div>
+  <div class="visual-col">
+    <div class="pipeline">
+      <div class="step">Human language</div>
+      <div class="down">↓</div>
+      <div class="step emphasis">source code</div>
+      <div class="down">↓</div>
+      <div class="step">Machine instructions</div>
+    </div>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>What is Python?</h2>
-  <p class="body">A high-level, interpreted, general-purpose programming language. It hides hardware details, and your code runs directly through the interpreter — no separate compile step.</p>
+<section class="slide split">
+  <div class="content-col">
+    <h2>What is Python?</h2>
+    <p class="body">A general-purpose programming language that hides hardware details and runs your code directly, with no separate compile step.</p>
+  </div>
+  <div class="visual-col">
+    <div class="traits">
+      <div class="trait">High-level</div>
+      <div class="trait">Interpreted</div>
+      <div class="trait">General-purpose</div>
+    </div>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Your first program</h2>
-  <pre><code># This line prints a greeting
+<section class="slide split">
+  <div class="content-col">
+    <h2>Your first program</h2>
+    <p class="body"><code class="inline">print(...)</code> writes to the console. A <code class="inline">#</code> starts a comment.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code># This line prints a greeting
 print("Hello, World!")</code></pre>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>The console</h2>
-  <p class="body">A text-based way to run programs, instead of clicking through a graphical interface.</p>
-  <pre style="margin-top: 28px;"><code>python workshop_1/calc.py</code></pre>
+<section class="slide split">
+  <div class="content-col">
+    <h2>The console</h2>
+    <p class="body">A text-based way to run programs, instead of clicking through a graphical interface.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>python3 workshop_1/calc.py</code></pre>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Variables</h2>
-  <p class="body">A name that refers to a value stored in memory.</p>
-  <pre style="margin-top: 28px;"><code>age = 25
+<section class="slide split">
+  <div class="content-col">
+    <h2>Variables</h2>
+    <p class="body">A name that refers to a value stored in memory.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = 25
 name = "Ada"</code></pre>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Data types</h2>
-  <table>
-    <tr><th>Type</th><th>Meaning</th><th>Example</th></tr>
-    <tr><td><code>int</code></td><td>whole number</td><td><code>42</code></td></tr>
-    <tr><td><code>float</code></td><td>decimal number</td><td><code>3.14</code></td></tr>
-    <tr><td><code>str</code></td><td>text</td><td><code>"hello"</code></td></tr>
-    <tr><td><code>bool</code></td><td>true/false</td><td><code>True</code></td></tr>
-  </table>
+<section class="slide split">
+  <div class="content-col">
+    <h2>Data types</h2>
+    <p class="body">Every value in Python has a type.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Type</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><code>int</code></td><td>whole number</td><td><code>42</code></td></tr>
+      <tr><td><code>float</code></td><td>decimal number</td><td><code>3.14</code></td></tr>
+      <tr><td><code>str</code></td><td>text</td><td><code>"hello"</code></td></tr>
+      <tr><td><code>bool</code></td><td>true/false</td><td><code>True</code></td></tr>
+    </table>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Why data types matter</h2>
-  <pre><code>age = 25
+<section class="slide split">
+  <div class="content-col">
+    <h2>Why data types matter</h2>
+    <p class="body">Python won't silently guess what you meant when combining a <code class="inline">str</code> and an <code class="inline">int</code>.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = 25
 print("Age: " + age)
-# TypeError: can only concatenate str (not "int") to str</code></pre>
+# TypeError: can only concatenate str
+# (not "int") to str</code></pre>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Type casting</h2>
-  <p class="body">Convert between types explicitly, and Python stops guessing.</p>
-  <pre style="margin-top: 28px;"><code>age = 25
+<section class="slide split">
+  <div class="content-col">
+    <h2>Type casting</h2>
+    <p class="body">Convert between types explicitly, and Python stops guessing.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = 25
 print("Age: " + str(age))  # works</code></pre>
+  </div>
 </section>
 
-<section class="slide">
-  <h2>Operators</h2>
-  <table>
-    <tr><th>Operator</th><th>Meaning</th><th>Example</th><th>Result</th></tr>
-    <tr><td><code>%</code></td><td>modulo</td><td><code>7 % 2</code></td><td><code>1</code></td></tr>
-    <tr><td><code>**</code></td><td>exponent</td><td><code>2 ** 3</code></td><td><code>8</code></td></tr>
-    <tr><td><code>==</code></td><td>equal</td><td><code>3 == 3</code></td><td><code>True</code></td></tr>
-  </table>
+<section class="slide split">
+  <div class="content-col">
+    <h2>f-strings</h2>
+    <p class="body">Build a string from variables without casting and concatenating by hand.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>name = "Ada"
+age = 25
+print(f"{name} is {age} years old")
+# Ada is 25 years old</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Operators</h2>
+    <p class="body">Arithmetic and comparison, same as you'd expect from math class.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Operator</th><th>Meaning</th><th>Example</th><th>Result</th></tr>
+      <tr><td><code>/</code></td><td>division</td><td><code>7 / 2</code></td><td><code>3.5</code></td></tr>
+      <tr><td><code>//</code></td><td>floor division</td><td><code>7 // 2</code></td><td><code>3</code></td></tr>
+      <tr><td><code>%</code></td><td>modulo</td><td><code>7 % 2</code></td><td><code>1</code></td></tr>
+      <tr><td><code>**</code></td><td>exponent</td><td><code>2 ** 3</code></td><td><code>8</code></td></tr>
+      <tr><td><code>==</code></td><td>equal</td><td><code>3 == 3</code></td><td><code>True</code></td></tr>
+    </table>
+  </div>
 </section>
 
 <section class="slide">
