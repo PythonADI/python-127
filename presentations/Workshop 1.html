@@ -24,21 +24,22 @@
   .slide {
     position: absolute;
     inset: 0;
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     padding: 8vh 9vw;
     opacity: 0;
     transform: scale(0.98);
-  }
-  .slide.active {
-    display: flex;
-    opacity: 1;
-    transform: scale(1);
+    pointer-events: none;
     transition: opacity 0.45s ease, transform 0.45s ease;
   }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
   @media (prefers-reduced-motion: reduce) {
-    .slide.active { transition: none; }
+    .slide { transition: none; }
   }
 
   .slide.split {
@@ -395,6 +396,7 @@ print(f"{name} is {age} years old")
   dotsContainer.appendChild(liquid);
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let liquidTimer = null;
 
   function dotLeft(i) {
     return dots[i].offsetLeft;
@@ -402,6 +404,13 @@ print(f"{name} is {age} years old")
 
   function placeLiquid(i, animate) {
     const targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
 
     if (!animate || reduceMotion) {
       liquid.style.transition = 'none';
@@ -413,7 +422,9 @@ print(f"{name} is {age} years old")
     }
 
     // Phase 1: stretch into a liquid bridge spanning the old and new positions.
-    const fromLeft = dotLeft(current);
+    // Read the liquid's own live position rather than the `current` index, so an
+    // interrupted transition bridges from where the blob actually is on screen.
+    const fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
     const bridgeLeft = Math.min(fromLeft, targetLeft);
     const bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
 
@@ -422,7 +433,8 @@ print(f"{name} is {age} years old")
     liquid.style.width = bridgeWidth + 'px';
 
     // Phase 2: spring back into a droplet at the new dot.
-    window.setTimeout(() => {
+    liquidTimer = window.setTimeout(() => {
+      liquidTimer = null;
       liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
       liquid.style.left = targetLeft + 'px';
       liquid.style.width = DOT_SIZE + 'px';
