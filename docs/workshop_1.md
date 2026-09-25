@@ -56,8 +56,11 @@ opposed to a GUI (graphical user interface) where you click buttons and
 icons. Run a Python file from the console with:
 
 ```
-python workshop_1/calc.py
+python3 workshop_1/calc.py
 ```
+
+(On Windows, use `py workshop_1/calc.py` if plain `python` doesn't
+work or opens the Microsoft Store.)
 
 ## 6. Variables
 
@@ -118,7 +121,23 @@ text_number = "10"
 print(int(text_number) + 5)  # 15
 ```
 
-## 10. Operators
+## 10. f-strings
+
+An **f-string** is a shortcut for building a string out of variables,
+without manually casting and concatenating with `+`. Put an `f` right
+before the opening quote, and any `{variable}` inside the string is
+replaced with its value:
+
+```python
+name = "Ada"
+age = 25
+print(f"{name} is {age} years old")   # Ada is 25 years old
+```
+
+This works even when the variable isn't a `str` — f-strings convert it
+for you, so `age` doesn't need `str(age)` here.
+
+## 11. Operators
 
 **Arithmetic:**
 
