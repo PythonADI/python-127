@@ -8,6 +8,7 @@ separate homework repo submitted via Pull Request.
 | # | Lesson | Slides | Homework |
 |---|--------|--------|----------|
 | 1 | [Workshop 1](docs/workshop_1.md) | [Slides](presentations/Workshop%201.html) | [python-127-homework-1](https://github.com/PythonADI/python-127-homework-1) |
+| 2 | [Workshop 2](docs/workshop_2.md) | [Slides](presentations/Workshop%202.html) | Coming soon |
 
 ## Resources
 

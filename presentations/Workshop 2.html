@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 2 — Input, Strings, and Booleans</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 9vw;
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  p.body {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+  p.body b {
+    font-weight: 600;
+  }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2em 2.2em;
+    width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: inherit;
+    line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+
+  code { font-variant-ligatures: none; }
+
+  table {
+    border-collapse: collapse;
+  }
+  th, td {
+    text-align: left;
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  td code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+
+  #dots {
+    position: fixed;
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    height: 7px;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--divider);
+  }
+  #liquid {
+    position: absolute;
+    top: 0;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 2</div>
+  <h1>Input, Strings,<br>and Booleans</h1>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Getting input</h2>
+    <p class="body"><code class="inline">input(...)</code> prints a prompt, waits for the user to press Enter, and returns what they typed.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>name = input("What is your name?\n")
+print(f"Hello, {name}!")</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Input is always text</h2>
+    <p class="body">Even if the user types <code class="inline">42</code>, you get back the <b>string</b> <code class="inline">"42"</code>.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = input("How old are you?\n")
+print(type(age))  # &lt;class 'str'&gt;
+print(age + 1)
+# TypeError: can only concatenate str
+# (not "int") to str</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Casting input</h2>
+    <p class="body">Wrap <code class="inline">input()</code> in <code class="inline">int(...)</code> or <code class="inline">float(...)</code> to do math with it.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = int(input("How old are you?\n"))
+print(f"In 5 years: {age + 5}")</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Escape sequences</h2>
+    <p class="body">A backslash inside a string starts a special character.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Sequence</th><th>Meaning</th></tr>
+      <tr><td><code>\n</code></td><td>new line</td></tr>
+      <tr><td><code>\t</code></td><td>tab</td></tr>
+      <tr><td><code>\"</code></td><td>double quote</td></tr>
+      <tr><td><code>\</code></td><td>backslash</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>String methods</h2>
+    <p class="body">Call them with a dot. They return a <b>new</b> string and leave the original alone.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>text = "   hello World   "
+text.upper()   # "   HELLO WORLD   "
+text.lower()   # "   hello world   "
+text.strip()   # "hello World"
+len("Ada")     # 3</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Booleans</h2>
+    <p class="body">Every comparison produces <code class="inline">True</code> or <code class="inline">False</code>. Add <code class="inline">=</code> in an f-string to see both sides.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>age = 20
+print(f"{age &gt;= 18 = }")
+# age &gt;= 18 = True</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Truthiness</h2>
+    <p class="body">Empty or zero is <code class="inline">False</code>. Everything else is <code class="inline">True</code>.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Value</th><th><code>bool(...)</code></th></tr>
+      <tr><td><code>0</code></td><td><code>False</code></td></tr>
+      <tr><td><code>-5</code></td><td><code>True</code></td></tr>
+      <tr><td><code>""</code></td><td><code>False</code></td></tr>
+      <tr><td><code>" "</code></td><td><code>True</code></td></tr>
+      <tr><td><code>"0"</code></td><td><code>True</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Floats aren't exact</h2>
+    <p class="body">Decimals are stored in binary, so tiny errors creep in. Use <code class="inline">round()</code>.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>0.1 + 0.2          # 0.30000000000000004
+0.1 + 0.2 == 0.3   # False
+round(0.1 + 0.2, 2)  # 0.3</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Constants</h2>
+    <p class="body"><code class="inline">ALL_CAPS</code> names tell other programmers: set once, never reassign.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>VAT_RATE = 0.18
+price = 100
+print(price * (1 + VAT_RATE))</code></pre>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>Next up</h2>
+  <p class="body">Run the examples in <code class="inline">workshop_2/</code>.</p>
+</section>
+
+<div id="dots"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots');
+  let current = 0;
+
+  slides.forEach(() => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dotsContainer.appendChild(dot);
+  });
+  const dots = document.querySelectorAll('.dot');
+
+  const DOT_SIZE = 7;
+  const liquid = document.createElement('div');
+  liquid.id = 'liquid';
+  dotsContainer.appendChild(liquid);
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let liquidTimer = null;
+
+  function dotLeft(i) {
+    return dots[i].offsetLeft;
+  }
+
+  function placeLiquid(i, animate) {
+    const targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
+
+    if (!animate || reduceMotion) {
+      liquid.style.transition = 'none';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+      liquid.offsetHeight; // flush the style change before re-enabling transitions
+      liquid.style.transition = '';
+      return;
+    }
+
+    // Phase 1: stretch into a liquid bridge spanning the old and new positions.
+    // Read the liquid's own live position rather than the `current` index, so an
+    // interrupted transition bridges from where the blob actually is on screen.
+    const fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
+    const bridgeLeft = Math.min(fromLeft, targetLeft);
+    const bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
+
+    liquid.style.transition = 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)';
+    liquid.style.left = bridgeLeft + 'px';
+    liquid.style.width = bridgeWidth + 'px';
+
+    // Phase 2: spring back into a droplet at the new dot.
+    liquidTimer = window.setTimeout(() => {
+      liquidTimer = null;
+      liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+    }, 220);
+  }
+
+  function show(i) {
+    slides[current].classList.remove('active');
+    const next = (i + slides.length) % slides.length;
+    placeLiquid(next, true);
+    current = next;
+    slides[current].classList.add('active');
+  }
+
+  placeLiquid(0, false);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') show(current + 1);
+    if (e.key === 'ArrowLeft') show(current - 1);
+  });
+  document.addEventListener('click', () => show(current + 1));
+</script>
+
+</body>
+</html>
