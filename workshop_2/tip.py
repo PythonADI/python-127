@@ -1,11 +1,13 @@
 # A tip calculator: input, casting, floats, round(), and a constant.
 
+
 TIP_RATE = 0.1
 
 bill = float(input("Bill total (GEL): "))
 tip = bill * TIP_RATE
 total = bill + tip
 
+# TIP_RATE = 0.5
 
 
 print(f"Tip:\t{round(tip, 2)} GEL")
