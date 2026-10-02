@@ -168,4 +168,5 @@ print(f"With VAT: {price * (1 + VAT_RATE)}")
 
 ## What's next
 
-See `workshop_2/` for runnable examples. Homework: coming soon.
+See `workshop_2/` for runnable examples, and your homework in
+[python-127-homework-2](https://github.com/PythonADI/python-127-homework-2).
