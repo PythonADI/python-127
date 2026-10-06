@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 4 — Loops</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-soft-2: rgba(0, 113, 227, 0.07);
+    --warn: #c2410c;
+    --ok: #1d7a3e;
+    --console-bg: #1d1d1f;
+    --console-text: #f5f5f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 9vw;
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  p.body {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+  p.body b { font-weight: 600; }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2em 2.2em;
+    width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: inherit;
+    line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+  code { font-variant-ligatures: none; }
+
+  table { border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td code { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+
+  /* ---------- animated slide layout ---------- */
+  .slide.anim {
+    justify-content: flex-start;
+    padding: 5.5vh 5vw 11vh;
+  }
+  .anim h2 {
+    font-size: clamp(24px, 2.5vw, 38px);
+    margin-bottom: 6px;
+  }
+  .anim .lead {
+    font-size: clamp(14px, 1.25vw, 20px);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    max-width: 90ch;
+    margin-bottom: 2.2vh;
+  }
+  .stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(0, 0.8fr);
+    gap: 2vw;
+    align-items: start;
+  }
+  .stage.no-vis { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+
+  .panel-label {
+    font-size: clamp(10px, 0.85vw, 13px);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.8vh;
+  }
+
+  /* code with sliding highlight band */
+  .codebox {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 14px;
+    padding: 1.1em 1.2em;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(13px, 1.15vw, 19px);
+    line-height: 1.75;
+    overflow: hidden;
+    /* These lines are divs, not <code>, so the global rule misses them and the
+       mono font would ligate <= into a single glyph students can't type. */
+    font-variant-ligatures: none;
+  }
+  .band {
+    position: absolute;
+    /* The JS positions the band with translateY(line.offsetTop), and offsetTop is
+       measured from the codebox border box. Pin top to 0 so both use the same
+       origin — without it the band's static position sits below the codebox's
+       top padding and that padding gets counted twice. */
+    top: 0;
+    left: 0.45em;
+    right: 0.45em;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    box-shadow: inset 2px 0 0 var(--accent);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+    opacity: 0;
+    z-index: 0;
+  }
+  .band.exit { background: rgba(194, 65, 12, 0.14); box-shadow: inset 2px 0 0 var(--warn); }
+  .codeline {
+    position: relative;
+    z-index: 1;
+    white-space: pre;
+    opacity: 0.38;
+    transition: opacity 0.25s ease;
+  }
+  .codeline.on { opacity: 1; }
+  .codeline.skip { opacity: 0.18; text-decoration: line-through; }
+
+  .caption {
+    margin-top: 1.4vh;
+    font-size: clamp(12px, 1.05vw, 17px);
+    line-height: 1.4;
+    color: var(--text-secondary);
+    min-height: 2.8em;
+  }
+  .caption b { color: var(--text-primary); font-weight: 600; }
+  .caption .t { color: var(--ok); font-weight: 600; }
+  .caption .f { color: var(--warn); font-weight: 600; }
+
+  /* variable panel */
+  .vars { display: flex; flex-wrap: wrap; gap: 0.7vw 0.7vw; margin-bottom: 2.2vh; }
+  .vbox {
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    padding: 0.5em 0.8em;
+    min-width: 5.2em;
+    background: #fff;
+  }
+  .vbox .vn {
+    font-size: clamp(10px, 0.85vw, 13px);
+    color: var(--text-secondary);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .vbox .vv {
+    font-size: clamp(16px, 1.5vw, 24px);
+    font-weight: 600;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .vbox.flash { animation: flash 0.5s ease; border-color: var(--accent); }
+  @keyframes flash {
+    0% { background: var(--accent-soft); transform: scale(1); }
+    35% { background: var(--accent-soft); transform: scale(1.07); }
+    100% { background: #fff; transform: scale(1); }
+  }
+
+  /* output panel */
+  .console {
+    background: var(--console-bg);
+    color: var(--console-text);
+    border-radius: 14px;
+    padding: 0.9em 1em;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.1vw, 18px);
+    line-height: 1.6;
+    min-height: 6em;
+    max-height: 34vh;
+    overflow: hidden;
+    font-variant-ligatures: none;
+  }
+  .console .oline { animation: rise 0.3s ease both; white-space: pre; }
+  .console .oline.ghost { color: #8e8e93; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* range tiles */
+  .tiles { display: flex; align-items: center; gap: 0.5vw; flex-wrap: wrap; }
+  .tile {
+    width: 2.3em; height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    border: 1px solid var(--divider);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(14px, 1.3vw, 21px);
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+  }
+  .tile.on { opacity: 1; transform: scale(1); background: var(--accent-soft-2); }
+  .tile.cur { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tile.excl {
+    opacity: 1; transform: scale(1);
+    color: var(--text-secondary);
+    text-decoration: line-through;
+    background: repeating-linear-gradient(45deg, #fafafa, #fafafa 4px, #f0f0f0 4px, #f0f0f0 8px);
+    margin-left: 1.1em;
+  }
+  .tilenote { font-size: clamp(11px, 0.95vw, 15px); color: var(--text-secondary); margin-top: 1vh; }
+
+  /* string scanner */
+  .scan { display: flex; gap: 0.3vw; flex-wrap: wrap; }
+  .cell {
+    width: 1.9em; height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--divider);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(14px, 1.25vw, 20px);
+    background: #fff;
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+  .cell.done { background: var(--accent-soft-2); color: var(--text-secondary); }
+  .cell.cur { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-4px); }
+  .cell.hit { box-shadow: 0 0 0 2px var(--ok) inset; }
+
+  /* accumulator bar */
+  .accum .big {
+    font-size: clamp(28px, 3vw, 46px);
+    font-weight: 700;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .bartrack {
+    margin-top: 1vh;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .barfill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .barticks { display: flex; gap: 0.4vw; margin-top: 0.8vh; flex-wrap: wrap; }
+  .chip {
+    font-size: clamp(11px, 0.95vw, 15px);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    border: 1px solid var(--divider);
+    border-radius: 999px;
+    padding: 0.15em 0.6em;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .chip.on { opacity: 1; }
+
+  /* nested grid */
+  .ngrid { display: grid; grid-template-columns: repeat(4, 2.5em); gap: 0.35vw; }
+  .gcell {
+    height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.1vw, 18px);
+    border: 1px solid var(--divider);
+    color: var(--text-secondary);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  .gcell.head { border: none; color: var(--text-secondary); font-size: clamp(11px, 0.9vw, 15px); }
+  .gcell.fill { background: var(--accent-soft); color: var(--text-primary); }
+  .gcell.cur { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.06); }
+  .gcell.rowdone { background: var(--accent-soft-2); }
+
+  /* flow diagram */
+  .flow svg { width: 100%; max-width: 15vw; height: auto; }
+  .flow .nd { fill: #fff; stroke: var(--divider); stroke-width: 2; transition: fill 0.2s ease, stroke 0.2s ease; }
+  .flow .nd.on { fill: var(--accent-soft); stroke: var(--accent); }
+  .flow .nd.onexit { fill: rgba(194, 65, 12, 0.14); stroke: var(--warn); }
+  .flow text { font-size: 13px; fill: var(--text-primary); font-family: -apple-system, "Segoe UI", sans-serif; }
+  .flow .lbl { font-size: 11px; fill: var(--text-secondary); }
+  .flow path.edge { fill: none; stroke: var(--divider); stroke-width: 2; }
+  .flow path.edge.hot { stroke: var(--accent); }
+  .flow path.edge.hotexit { stroke: var(--warn); }
+  .flow .token {
+    fill: var(--accent);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .flow .token.exit { fill: var(--warn); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .band, .barfill, .tile, .cell, .gcell, .token, .codeline { transition: none; }
+    .vbox.flash { animation: none; border-color: var(--accent); }
+    .console .oline { animation: none; }
+  }
+
+  #dots {
+    position: fixed;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    height: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--divider); }
+  #liquid {
+    position: absolute;
+    top: 0;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  #stepdots {
+    position: fixed;
+    bottom: 6.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    height: 4px;
+  }
+  #stepdots .sd { width: 4px; height: 4px; border-radius: 50%; background: var(--divider); }
+  #stepdots .sd.done { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 4</div>
+  <h1>Loops</h1>
+</section>
+
+<!-- 1 -->
+<section class="slide anim" data-scene="s1">
+  <h2>Why loops</h2>
+  <p class="lead">Repeating work without repeating code. Watch the same two lines run three times.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 2 -->
+<section class="slide anim" data-scene="s2">
+  <h2>The three parts of a <code class="inline">while</code> loop</h2>
+  <p class="lead">A starting value, a condition, and a change that moves the condition toward <code class="inline">False</code>.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 3 -->
+<section class="slide anim" data-scene="s3">
+  <h2>The infinite loop</h2>
+  <p class="lead">Forget the change and the condition never turns <code class="inline">False</code>. Press Ctrl+C to stop it.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 4 -->
+<section class="slide anim" data-scene="s4">
+  <h2><code class="inline">for</code> and <code class="inline">range</code></h2>
+  <p class="lead">When you know how many times. <code class="inline">range(3)</code> hands out 0, 1, 2 — one value per pass.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 5a: static table -->
+<section class="slide split">
+  <div class="content-col">
+    <h2>range's three forms</h2>
+    <p class="body"><code class="inline">stop</code> is always <b>excluded</b>.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Call</th><th>Gives</th></tr>
+      <tr><td><code>range(5)</code></td><td><code>0 1 2 3 4</code></td></tr>
+      <tr><td><code>range(2, 6)</code></td><td><code>2 3 4 5</code></td></tr>
+      <tr><td><code>range(1, 10, 3)</code></td><td><code>1 4 7</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 5b -->
+<section class="slide anim" data-scene="s5">
+  <h2><code class="inline">range(1, 4)</code> — start and stop</h2>
+  <p class="lead">Counting starts at 1 and stops <i>before</i> 4.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 6 -->
+<section class="slide anim" data-scene="s6">
+  <h2><code class="inline">for</code> over a string</h2>
+  <p class="lead">The loop variable takes each character in turn.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 7 -->
+<section class="slide anim" data-scene="s7">
+  <h2>Accumulating a total</h2>
+  <p class="lead">A variable that survives across iterations — it is created before the loop, not inside it.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 8 -->
+<section class="slide anim" data-scene="s8">
+  <h2>Counting with a condition inside the loop</h2>
+  <p class="lead">The loop visits every character; the <code class="inline">if</code> decides which ones count.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 9 -->
+<section class="slide anim" data-scene="s9">
+  <h2><code class="inline">break</code> — leave the loop immediately</h2>
+  <p class="lead">The remaining values of the range are never used.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 10 -->
+<section class="slide anim" data-scene="s10">
+  <h2><code class="inline">continue</code> — skip the rest of this pass</h2>
+  <p class="lead">Jump straight back to the top and carry on with the next value.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 11 -->
+<section class="slide anim" data-scene="s11">
+  <h2>Nested loops</h2>
+  <p class="lead">The inner loop runs fully for every single pass of the outer one.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 12 -->
+<section class="slide split">
+  <div class="content-col">
+    <h2><code class="inline">while</code> vs <code class="inline">for</code></h2>
+    <p class="body">Use <code class="inline">for</code> when you know the number of repeats. Use <code class="inline">while</code> when you repeat <b>until something becomes true</b>.</p>
+  </div>
+  <div class="visual-col">
+    <pre><code>password = ""
+
+while password != "python":
+    password = input("Password: ").strip()
+
+print("Welcome!")</code></pre>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Pick the right loop</h2>
+    <p class="body">Same question, every time: <b>do I know the count?</b></p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Situation</th><th>Loop</th></tr>
+      <tr><td>3 lines, 10 numbers, each letter</td><td><code>for</code></td></tr>
+      <tr><td>until the user types the right thing</td><td><code>while</code></td></tr>
+      <tr><td>count down to zero</td><td><code>while</code></td></tr>
+      <tr><td>a fixed number of repeats</td><td><code>for</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>Next up</h2>
+  <p class="body">Run the examples in <code class="inline">workshop_4/</code>, then try the homework.</p>
+</section>
+
+<div id="stepdots"></div>
+<div id="dots"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     SCENES — each one is a trace. Every step says which line is
+     executing, the variable values at that moment, the output
+     line appended (if any) and any extra visual state.
+     ============================================================ */
+
+  var SCENES = {
+
+    s1: {
+      code: [
+        "count = 1",
+        "while count <= 3:",
+        "    print(f\"Line {count}\")",
+        "    count += 1"
+      ],
+      varOrder: ["count"],
+      vis: null,
+      steps: [
+        { line: 0, vars: { count: 1 }, changed: ["count"], note: "A starting value: <b>count = 1</b>." },
+        { line: 1, vars: { count: 1 }, note: "Check: <code>1 &lt;= 3</code> is <span class='t'>True</span> &rarr; run the body." },
+        { line: 2, vars: { count: 1 }, out: "Line 1", note: "Print, with the current value of <b>count</b>." },
+        { line: 3, vars: { count: 2 }, changed: ["count"], note: "The change: <b>count</b> becomes 2. Back to the condition." },
+        { line: 1, vars: { count: 2 }, note: "Check: <code>2 &lt;= 3</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { count: 2 }, out: "Line 2" },
+        { line: 3, vars: { count: 3 }, changed: ["count"], note: "<b>count</b> becomes 3." },
+        { line: 1, vars: { count: 3 }, note: "Check: <code>3 &lt;= 3</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { count: 3 }, out: "Line 3" },
+        { line: 3, vars: { count: 4 }, changed: ["count"], note: "<b>count</b> becomes 4." },
+        { line: 1, vars: { count: 4 }, note: "Check: <code>4 &lt;= 3</code> is <span class='f'>False</span> &rarr; the loop ends. Two lines of code, three lines of output." }
+      ]
+    },
+
+    s2: {
+      code: [
+        "countdown = 3",
+        "while countdown > 0:",
+        "    print(countdown)",
+        "    countdown -= 1",
+        "print(\"Go!\")"
+      ],
+      varOrder: ["countdown"],
+      vis: "flow",
+      steps: [
+        { line: 0, vars: { countdown: 3 }, changed: ["countdown"], flow: "start", note: "Part 1 — the starting value." },
+        { line: 1, vars: { countdown: 3 }, flow: "cond", note: "Part 2 — the condition: <code>3 &gt; 0</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { countdown: 3 }, out: "3", flow: "body" },
+        { line: 3, vars: { countdown: 2 }, changed: ["countdown"], flow: "back", note: "Part 3 — the change, then the arrow back up." },
+        { line: 1, vars: { countdown: 2 }, flow: "cond", note: "<code>2 &gt; 0</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { countdown: 2 }, out: "2", flow: "body" },
+        { line: 3, vars: { countdown: 1 }, changed: ["countdown"], flow: "back" },
+        { line: 1, vars: { countdown: 1 }, flow: "cond", note: "<code>1 &gt; 0</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { countdown: 1 }, out: "1", flow: "body" },
+        { line: 3, vars: { countdown: 0 }, changed: ["countdown"], flow: "back", note: "<b>countdown</b> is now 0." },
+        { line: 1, vars: { countdown: 0 }, flow: "exit", note: "<code>0 &gt; 0</code> is <span class='f'>False</span> &rarr; leave the loop." },
+        { line: 4, vars: { countdown: 0 }, out: "Go!", flow: "after", note: "The line after the loop runs once." }
+      ]
+    },
+
+    s3: {
+      code: [
+        "count = 1",
+        "while count <= 3:",
+        "    print(count)"
+      ],
+      varOrder: ["count"],
+      vis: "flow",
+      steps: [
+        { line: 0, vars: { count: 1 }, changed: ["count"], flow: "start", note: "Starting value, condition... but no change anywhere." },
+        { line: 1, vars: { count: 1 }, flow: "cond", note: "<code>1 &lt;= 3</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { count: 1 }, out: "1", flow: "body" },
+        { line: 1, vars: { count: 1 }, flow: "back", note: "Back to the condition — and <b>count</b> is still 1." },
+        { line: 1, vars: { count: 1 }, flow: "cond", note: "<code>1 &lt;= 3</code> is <span class='t'>True</span> again." },
+        { line: 2, vars: { count: 1 }, out: "1", flow: "body" },
+        { line: 1, vars: { count: 1 }, flow: "back", note: "Nothing moves the condition toward <code>False</code>." },
+        { line: 2, vars: { count: 1 }, out: "1", flow: "body" },
+        { line: 2, vars: { count: 1 }, out: "...", ghostLast: true, flow: "body", note: "Forever. Press <b>Ctrl+C</b> in the terminal to stop it." }
+      ]
+    },
+
+    s4: {
+      code: [
+        "for i in range(3):",
+        "    print(i)"
+      ],
+      varOrder: ["i"],
+      vis: "range",
+      range: { values: [0, 1, 2], excluded: 3, note: "range(3) &rarr; 0 1 2. The stop value 3 is never handed out." },
+      steps: [
+        { line: 0, vars: {}, tiles: 0, note: "<code>range(3)</code> is the supply of values. The loop asks for one at a time." },
+        { line: 0, vars: { i: 0 }, changed: ["i"], tiles: 1, cur: 0, note: "First value taken: <b>i = 0</b>." },
+        { line: 1, vars: { i: 0 }, out: "0", tiles: 1, cur: 0 },
+        { line: 0, vars: { i: 1 }, changed: ["i"], tiles: 2, cur: 1, note: "Next value: <b>i = 1</b>." },
+        { line: 1, vars: { i: 1 }, out: "1", tiles: 2, cur: 1 },
+        { line: 0, vars: { i: 2 }, changed: ["i"], tiles: 3, cur: 2, note: "Next value: <b>i = 2</b>." },
+        { line: 1, vars: { i: 2 }, out: "2", tiles: 3, cur: 2 },
+        { line: 0, vars: { i: 2 }, tiles: 3, showExcl: true, note: "No values left &rarr; the loop ends. <b>3 was never used.</b>" }
+      ]
+    },
+
+    s5: {
+      code: [
+        "for number in range(1, 4):",
+        "    print(number)"
+      ],
+      varOrder: ["number"],
+      vis: "range",
+      range: { values: [1, 2, 3], excluded: 4, note: "range(1, 4) &rarr; 1 2 3. Starts at 1, stops before 4." },
+      steps: [
+        { line: 0, vars: {}, tiles: 0, note: "<code>range(1, 4)</code>: start at 1, stop before 4." },
+        { line: 0, vars: { number: 1 }, changed: ["number"], tiles: 1, cur: 0 },
+        { line: 1, vars: { number: 1 }, out: "1", tiles: 1, cur: 0 },
+        { line: 0, vars: { number: 2 }, changed: ["number"], tiles: 2, cur: 1 },
+        { line: 1, vars: { number: 2 }, out: "2", tiles: 2, cur: 1 },
+        { line: 0, vars: { number: 3 }, changed: ["number"], tiles: 3, cur: 2 },
+        { line: 1, vars: { number: 3 }, out: "3", tiles: 3, cur: 2 },
+        { line: 0, vars: { number: 3 }, tiles: 3, showExcl: true, note: "Three values, three lines of output. <b>4 is excluded.</b>" }
+      ]
+    },
+
+    s6: {
+      code: [
+        "for letter in \"cat\":",
+        "    print(letter)"
+      ],
+      varOrder: ["letter"],
+      vis: "scan",
+      scan: { text: "cat" },
+      steps: [
+        { line: 0, vars: {}, scanIdx: -1, note: "A string is a sequence of characters, so a <code>for</code> loop can walk it." },
+        { line: 0, vars: { letter: "'c'" }, changed: ["letter"], scanIdx: 0, note: "<b>letter</b> takes the first character." },
+        { line: 1, vars: { letter: "'c'" }, out: "c", scanIdx: 0 },
+        { line: 0, vars: { letter: "'a'" }, changed: ["letter"], scanIdx: 1 },
+        { line: 1, vars: { letter: "'a'" }, out: "a", scanIdx: 1 },
+        { line: 0, vars: { letter: "'t'" }, changed: ["letter"], scanIdx: 2 },
+        { line: 1, vars: { letter: "'t'" }, out: "t", scanIdx: 2 },
+        { line: 0, vars: { letter: "'t'" }, scanIdx: 3, note: "No characters left &rarr; the loop ends. One line per character." }
+      ]
+    },
+
+    s7: {
+      code: [
+        "total = 0",
+        "for number in range(1, 5):",
+        "    total += number",
+        "    print(f\"added {number}, total is now {total}\")",
+        "print(f\"Final total: {total}\")"
+      ],
+      varOrder: ["number", "total"],
+      vis: "accum",
+      accum: { max: 10 },
+      steps: [
+        { line: 0, vars: { total: 0 }, changed: ["total"], bar: 0, chips: 0, note: "<b>total</b> is created <i>before</i> the loop — inside, it would reset every pass." },
+        { line: 1, vars: { total: 0, number: 1 }, changed: ["number"], bar: 0, chips: 0 },
+        { line: 2, vars: { total: 1, number: 1 }, changed: ["total"], bar: 1, chips: 1, note: "<code>total += number</code> &rarr; 0 + 1 = 1." },
+        { line: 3, vars: { total: 1, number: 1 }, out: "added 1, total is now 1", bar: 1, chips: 1 },
+        { line: 1, vars: { total: 1, number: 2 }, changed: ["number"], bar: 1, chips: 1 },
+        { line: 2, vars: { total: 3, number: 2 }, changed: ["total"], bar: 3, chips: 2, note: "1 + 2 = 3. <b>total survives</b> from the previous pass." },
+        { line: 3, vars: { total: 3, number: 2 }, out: "added 2, total is now 3", bar: 3, chips: 2 },
+        { line: 1, vars: { total: 3, number: 3 }, changed: ["number"], bar: 3, chips: 2 },
+        { line: 2, vars: { total: 6, number: 3 }, changed: ["total"], bar: 6, chips: 3, note: "3 + 3 = 6." },
+        { line: 3, vars: { total: 6, number: 3 }, out: "added 3, total is now 6", bar: 6, chips: 3 },
+        { line: 1, vars: { total: 6, number: 4 }, changed: ["number"], bar: 6, chips: 3 },
+        { line: 2, vars: { total: 10, number: 4 }, changed: ["total"], bar: 10, chips: 4, note: "6 + 4 = 10." },
+        { line: 3, vars: { total: 10, number: 4 }, out: "added 4, total is now 10", bar: 10, chips: 4 },
+        { line: 1, vars: { total: 10, number: 4 }, bar: 10, chips: 4, note: "<code>range(1, 5)</code> gave 1 2 3 4 — nothing left, the loop ends." },
+        { line: 4, vars: { total: 10, number: 4 }, out: "Final total: 10", bar: 10, chips: 4, note: "After the loop, <b>total</b> still holds 10." }
+      ]
+    },
+
+    s8: {
+      code: [
+        "vowels = 0",
+        "for letter in \"programming\":",
+        "    if letter in \"aeiou\":",
+        "        vowels += 1",
+        "print(f\"vowels: {vowels}\")"
+      ],
+      varOrder: ["letter", "vowels"],
+      vis: "scan",
+      scan: { text: "programming" },
+      steps: [
+        { line: 0, vars: { vowels: 0 }, changed: ["vowels"], scanIdx: -1, note: "The counter starts at 0." },
+        { line: 2, vars: { vowels: 0, letter: "'p'" }, changed: ["letter"], scanIdx: 0, note: "<code>'p' in \"aeiou\"</code> is <span class='f'>False</span> &rarr; skip the body." },
+        { line: 2, vars: { vowels: 0, letter: "'r'" }, changed: ["letter"], scanIdx: 1, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 0, letter: "'o'" }, changed: ["letter"], scanIdx: 2, hit: true, note: "<code>'o' in \"aeiou\"</code> is <span class='t'>True</span>!" },
+        { line: 3, vars: { vowels: 1, letter: "'o'" }, changed: ["vowels"], scanIdx: 2, hit: true, note: "<b>vowels</b> becomes 1." },
+        { line: 2, vars: { vowels: 1, letter: "'g'" }, changed: ["letter"], scanIdx: 3, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 1, letter: "'r'" }, changed: ["letter"], scanIdx: 4, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 1, letter: "'a'" }, changed: ["letter"], scanIdx: 5, hit: true, note: "<span class='t'>True</span>!" },
+        { line: 3, vars: { vowels: 2, letter: "'a'" }, changed: ["vowels"], scanIdx: 5, hit: true, note: "<b>vowels</b> becomes 2." },
+        { line: 2, vars: { vowels: 2, letter: "'m'" }, changed: ["letter"], scanIdx: 6, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 2, letter: "'m'" }, changed: ["letter"], scanIdx: 7, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 2, letter: "'i'" }, changed: ["letter"], scanIdx: 8, hit: true, note: "<span class='t'>True</span>!" },
+        { line: 3, vars: { vowels: 3, letter: "'i'" }, changed: ["vowels"], scanIdx: 8, hit: true, note: "<b>vowels</b> becomes 3." },
+        { line: 2, vars: { vowels: 3, letter: "'n'" }, changed: ["letter"], scanIdx: 9, note: "<span class='f'>False</span>." },
+        { line: 2, vars: { vowels: 3, letter: "'g'" }, changed: ["letter"], scanIdx: 10, note: "<span class='f'>False</span>." },
+        { line: 1, vars: { vowels: 3, letter: "'g'" }, scanIdx: 11, note: "Every character has been visited &rarr; the loop ends." },
+        { line: 4, vars: { vowels: 3, letter: "'g'" }, out: "vowels: 3", scanIdx: 11, note: "Printed <b>once</b>, after the loop — not eleven times." }
+      ]
+    },
+
+    s9: {
+      code: [
+        "for number in range(1, 10):",
+        "    if number == 4:",
+        "        break",
+        "    print(number)",
+        "print(\"done\")"
+      ],
+      varOrder: ["number"],
+      vis: "flow",
+      flowKind: "break",
+      steps: [
+        { line: 0, vars: { number: 1 }, changed: ["number"], flow: "cond", note: "<code>range(1, 10)</code> could give 1 ... 9." },
+        { line: 1, vars: { number: 1 }, flow: "body", note: "<code>1 == 4</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 1 }, out: "1", flow: "body" },
+        { line: 0, vars: { number: 2 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 2 }, flow: "body", note: "<code>2 == 4</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 2 }, out: "2", flow: "body" },
+        { line: 0, vars: { number: 3 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 3 }, flow: "body", note: "<code>3 == 4</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 3 }, out: "3", flow: "body" },
+        { line: 0, vars: { number: 4 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 4 }, flow: "body", note: "<code>4 == 4</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { number: 4 }, flow: "exit", exitMid: true, skip: [3], note: "<b>break</b> &rarr; out of the loop at once. <code>print(number)</code> is never reached, and 5 ... 9 are never used." },
+        { line: 4, vars: { number: 4 }, out: "done", flow: "after", note: "Execution continues after the loop." }
+      ]
+    },
+
+    s10: {
+      code: [
+        "for number in range(1, 6):",
+        "    if number == 3:",
+        "        continue",
+        "    print(number)"
+      ],
+      varOrder: ["number"],
+      vis: "flow",
+      flowKind: "continue",
+      steps: [
+        { line: 0, vars: { number: 1 }, changed: ["number"], flow: "cond" },
+        { line: 1, vars: { number: 1 }, flow: "body", note: "<code>1 == 3</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 1 }, out: "1", flow: "body" },
+        { line: 0, vars: { number: 2 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 2 }, flow: "body", note: "<code>2 == 3</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 2 }, out: "2", flow: "body" },
+        { line: 0, vars: { number: 3 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 3 }, flow: "body", note: "<code>3 == 3</code> is <span class='t'>True</span>." },
+        { line: 2, vars: { number: 3 }, flow: "back", skip: [3], note: "<b>continue</b> &rarr; back to the top from the middle of the body. <code>print(3)</code> is skipped, but the loop lives on." },
+        { line: 0, vars: { number: 4 }, changed: ["number"], flow: "cond" },
+        { line: 1, vars: { number: 4 }, flow: "body", note: "<code>4 == 3</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 4 }, out: "4", flow: "body" },
+        { line: 0, vars: { number: 5 }, changed: ["number"], flow: "back" },
+        { line: 1, vars: { number: 5 }, flow: "body", note: "<code>5 == 3</code> is <span class='f'>False</span>." },
+        { line: 3, vars: { number: 5 }, out: "5", flow: "body" },
+        { line: 0, vars: { number: 5 }, flow: "exit", note: "Values exhausted &rarr; the loop ends. Only 3 is missing from the output." }
+      ]
+    },
+
+    s11: {
+      code: [
+        "for row in range(1, 4):",
+        "    for col in range(1, 4):",
+        "        print(f\"{row} x {col} = {row * col}\")",
+        "    print(\"---\")"
+      ],
+      varOrder: ["row", "col"],
+      vis: "grid",
+      steps: [
+        { line: 0, vars: { row: 1 }, changed: ["row"], cells: 0, note: "Outer loop, pass 1: <b>row = 1</b>." },
+        { line: 2, vars: { row: 1, col: 1 }, changed: ["col"], out: "1 x 1 = 1", cells: 1, curCell: 0 },
+        { line: 2, vars: { row: 1, col: 2 }, changed: ["col"], out: "1 x 2 = 2", cells: 2, curCell: 1 },
+        { line: 2, vars: { row: 1, col: 3 }, changed: ["col"], out: "1 x 3 = 3", cells: 3, curCell: 2, note: "The inner loop has finished its three passes." },
+        { line: 3, vars: { row: 1, col: 3 }, out: "---", cells: 3, note: "This line is in the <b>outer</b> body — once per row." },
+        { line: 0, vars: { row: 2, col: 3 }, changed: ["row"], cells: 3, note: "Outer loop, pass 2: <b>row = 2</b>. The inner loop starts over at <code>col = 1</code>." },
+        { line: 2, vars: { row: 2, col: 1 }, changed: ["col"], out: "2 x 1 = 2", cells: 4, curCell: 3 },
+        { line: 2, vars: { row: 2, col: 2 }, changed: ["col"], out: "2 x 2 = 4", cells: 5, curCell: 4 },
+        { line: 2, vars: { row: 2, col: 3 }, changed: ["col"], out: "2 x 3 = 6", cells: 6, curCell: 5 },
+        { line: 3, vars: { row: 2, col: 3 }, out: "---", cells: 6 },
+        { line: 0, vars: { row: 3, col: 3 }, changed: ["row"], cells: 6, note: "Outer loop, pass 3: <b>row = 3</b>." },
+        { line: 2, vars: { row: 3, col: 1 }, changed: ["col"], out: "3 x 1 = 3", cells: 7, curCell: 6 },
+        { line: 2, vars: { row: 3, col: 2 }, changed: ["col"], out: "3 x 2 = 6", cells: 8, curCell: 7 },
+        { line: 2, vars: { row: 3, col: 3 }, changed: ["col"], out: "3 x 3 = 9", cells: 9, curCell: 8 },
+        { line: 3, vars: { row: 3, col: 3 }, out: "---", cells: 9 },
+        { line: 0, vars: { row: 3, col: 3 }, cells: 9, note: "3 outer passes x 3 inner passes = <b>9 printed products</b>, plus 3 separator lines." }
+      ]
+    }
+  };
+
+  /* ============================================================
+     ENGINE
+     ============================================================ */
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function labelled(cls, label) {
+    var wrap = el('div', cls);
+    wrap.appendChild(el('div', 'panel-label', label));
+    return wrap;
+  }
+
+  var FLOW_POS = {
+    cond:  [100, 46],
+    body:  [100, 140],
+    mid:   [100, 118],
+    back:  [26, 112],
+    exit:  [172, 46],
+    after: [172, 92]
+  };
+
+  function buildFlow(kind) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 220');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Loop flow diagram');
+
+    function node(tag, attrs, cls) {
+      var n = document.createElementNS(ns, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      if (cls) n.setAttribute('class', cls);
+      svg.appendChild(n);
+      return n;
+    }
+    function text(x, y, s, cls) {
+      var t = document.createElementNS(ns, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', 'middle');
+      if (cls) t.setAttribute('class', cls);
+      t.textContent = s;
+      svg.appendChild(t);
+      return t;
+    }
+
+    // back arrow (body -> condition)
+    var back = node('path', { d: 'M 100 164 L 100 180 L 26 180 L 26 46 L 70 46' }, 'edge');
+    // cond -> body
+    var down = node('path', { d: 'M 100 68 L 100 116' }, 'edge');
+    // cond -> exit (False)
+    var out = node('path', { d: 'M 130 46 L 168 46 L 168 84' }, 'edge');
+
+    var diamond = node('polygon', { points: '100,24 130,46 100,68 70,46' }, 'nd');
+    var body = node('rect', { x: '62', y: '116', width: '76', height: '48', rx: '10' }, 'nd');
+    var after = node('rect', { x: '140', y: '84', width: '56', height: '34', rx: '10' }, 'nd');
+
+    text(100, 50, 'check', '');
+    text(100, 145, 'body', '');
+    text(168, 105, 'after', 'lbl');
+    text(46, 40, 'True', 'lbl');
+    text(150, 36, 'False', 'lbl');
+
+    var token = document.createElementNS(ns, 'circle');
+    token.setAttribute('r', '7');
+    token.setAttribute('class', 'token');
+    token.setAttribute('cx', '0');
+    token.setAttribute('cy', '0');
+    svg.appendChild(token);
+
+    var wrap = labelled('flow', kind === 'break' ? 'break jumps out' : (kind === 'continue' ? 'continue jumps back' : 'flow'));
+    wrap.appendChild(svg);
+    return {
+      root: wrap,
+      token: token,
+      diamond: diamond,
+      body: body,
+      after: after,
+      edges: { back: back, down: down, out: out }
+    };
+  }
+
+  function buildScene(section, scene) {
+    var stage = section.querySelector('.stage');
+    stage.innerHTML = '';
+    if (!scene.vis) stage.classList.add('no-vis');
+
+    // column 1: code + caption
+    var col1 = el('div');
+    col1.appendChild(el('div', 'panel-label', 'code'));
+    var codebox = el('div', 'codebox');
+    var band = el('div', 'band');
+    codebox.appendChild(band);
+    var lines = [];
+    scene.code.forEach(function (src) {
+      var ln = el('div', 'codeline', src);
+      codebox.appendChild(ln);
+      lines.push(ln);
+    });
+    col1.appendChild(codebox);
+    var caption = el('div', 'caption');
+    col1.appendChild(caption);
+    stage.appendChild(col1);
+
+    // column 2: variables + output
+    var col2 = el('div');
+    var varsWrap = labelled('', 'variables');
+    var vars = el('div', 'vars');
+    var vboxes = {};
+    scene.varOrder.forEach(function (name) {
+      var b = el('div', 'vbox');
+      b.appendChild(el('div', 'vn', name));
+      var v = el('div', 'vv', '—');
+      b.appendChild(v);
+      vars.appendChild(b);
+      vboxes[name] = { box: b, val: v };
+    });
+    varsWrap.appendChild(vars);
+    col2.appendChild(varsWrap);
+    var outWrap = labelled('', 'output');
+    var console_ = el('div', 'console');
+    outWrap.appendChild(console_);
+    col2.appendChild(outWrap);
+    stage.appendChild(col2);
+
+    var visual = null;
+    if (scene.vis) {
+      var col3 = el('div');
+      if (scene.vis === 'flow') {
+        visual = buildFlow(scene.flowKind);
+        col3.appendChild(visual.root);
+      } else if (scene.vis === 'range') {
+        var w = labelled('', 'the range');
+        var tiles = el('div', 'tiles');
+        var tileEls = [];
+        scene.range.values.forEach(function (v) {
+          var t = el('div', 'tile', String(v));
+          tiles.appendChild(t);
+          tileEls.push(t);
+        });
+        var excl = el('div', 'tile excl', String(scene.range.excluded));
+        excl.style.visibility = 'hidden';
+        tiles.appendChild(excl);
+        w.appendChild(tiles);
+        w.appendChild(el('div', 'tilenote', '')).innerHTML = scene.range.note;
+        col3.appendChild(w);
+        visual = { tiles: tileEls, excl: excl };
+      } else if (scene.vis === 'scan') {
+        var sw = labelled('', 'the string');
+        var scan = el('div', 'scan');
+        var cells = [];
+        scene.scan.text.split('').forEach(function (ch) {
+          var c = el('div', 'cell', ch);
+          scan.appendChild(c);
+          cells.push(c);
+        });
+        sw.appendChild(scan);
+        col3.appendChild(sw);
+        visual = { cells: cells };
+      } else if (scene.vis === 'accum') {
+        var aw = labelled('accum', 'running total');
+        var big = el('div', 'big', '0');
+        aw.appendChild(big);
+        var track = el('div', 'bartrack');
+        var fill = el('div', 'barfill');
+        track.appendChild(fill);
+        aw.appendChild(track);
+        var ticks = el('div', 'barticks');
+        var chips = [];
+        ['+1', '+2', '+3', '+4'].forEach(function (s) {
+          var c = el('div', 'chip', s);
+          ticks.appendChild(c);
+          chips.push(c);
+        });
+        aw.appendChild(ticks);
+        col3.appendChild(aw);
+        visual = { big: big, fill: fill, chips: chips, max: scene.accum.max };
+      } else if (scene.vis === 'grid') {
+        var gw = labelled('', 'row x col');
+        var grid = el('div', 'ngrid');
+        grid.appendChild(el('div', 'gcell head', ''));
+        [1, 2, 3].forEach(function (c) { grid.appendChild(el('div', 'gcell head', 'c' + c)); });
+        var gcells = [];
+        [1, 2, 3].forEach(function (r) {
+          grid.appendChild(el('div', 'gcell head', 'r' + r));
+          [1, 2, 3].forEach(function (c) {
+            var g = el('div', 'gcell', String(r * c));
+            grid.appendChild(g);
+            gcells.push(g);
+          });
+        });
+        gw.appendChild(grid);
+        col3.appendChild(gw);
+        visual = { cells: gcells };
+      }
+      stage.appendChild(col3);
+    }
+
+    return {
+      scene: scene,
+      lines: lines,
+      band: band,
+      caption: caption,
+      vboxes: vboxes,
+      console: console_,
+      visual: visual,
+      lastRendered: -1
+    };
+  }
+
+  function applyStep(ui, index, animate) {
+    var scene = ui.scene;
+    var steps = scene.steps;
+    var st = steps[index];
+
+    // --- line highlight band ---
+    var target = ui.lines[st.line];
+    ui.lines.forEach(function (ln, i) {
+      ln.classList.toggle('on', i === st.line);
+      ln.classList.toggle('skip', !!(st.skip && st.skip.indexOf(i) !== -1));
+    });
+    if (!animate || reduceMotion) ui.band.style.transition = 'none';
+    ui.band.style.height = target.offsetHeight + 'px';
+    ui.band.style.transform = 'translateY(' + target.offsetTop + 'px)';
+    ui.band.style.opacity = '1';
+    ui.band.classList.toggle('exit', st.flow === 'exit' || st.flow === 'after');
+    if (!animate || reduceMotion) {
+      ui.band.offsetHeight;
+      ui.band.style.transition = '';
+    }
+
+    // --- caption ---
+    ui.caption.innerHTML = st.note || '';
+
+    // --- variables ---
+    Object.keys(ui.vboxes).forEach(function (name) {
+      var slot = ui.vboxes[name];
+      var has = Object.prototype.hasOwnProperty.call(st.vars, name);
+      slot.val.textContent = has ? String(st.vars[name]) : '—';
+      slot.box.style.opacity = has ? '1' : '0.35';
+      slot.box.classList.remove('flash');
+    });
+    if (animate && !reduceMotion && st.changed) {
+      st.changed.forEach(function (name) {
+        var slot = ui.vboxes[name];
+        if (!slot) return;
+        void slot.box.offsetWidth;
+        slot.box.classList.add('flash');
+      });
+    } else if (st.changed) {
+      st.changed.forEach(function (name) {
+        if (ui.vboxes[name]) ui.vboxes[name].box.classList.add('flash');
+      });
+    }
+
+    // --- output (rebuilt from the trace so stepping back is exact) ---
+    ui.console.innerHTML = '';
+    for (var i = 0; i <= index; i++) {
+      if (steps[i].out === undefined) continue;
+      var line = el('div', 'oline', steps[i].out);
+      if (steps[i].ghostLast) line.classList.add('ghost');
+      if (!animate || reduceMotion || i < index) line.style.animation = 'none';
+      ui.console.appendChild(line);
+    }
+
+    // --- visual set-piece ---
+    var v = ui.visual;
+    if (!v) return;
+
+    if (scene.vis === 'flow') {
+      var key = st.flow === 'start' ? 'cond' : (st.flow || 'cond');
+      if (st.flow === 'back') key = 'back';
+      if (st.flow === 'exit') key = st.exitMid ? 'exit' : 'exit';
+      var pos = FLOW_POS[key] || FLOW_POS.cond;
+      v.token.setAttribute('transform', 'translate(' + pos[0] + ',' + pos[1] + ')');
+      v.token.classList.toggle('exit', st.flow === 'exit' || st.flow === 'after');
+      v.diamond.setAttribute('class', 'nd' + (st.flow === 'cond' || st.flow === 'start' ? ' on' : ''));
+      v.body.setAttribute('class', 'nd' + (st.flow === 'body' ? ' on' : ''));
+      v.after.setAttribute('class', 'nd' + (st.flow === 'after' ? ' onexit' : ''));
+      v.edges.back.setAttribute('class', 'edge' + (st.flow === 'back' ? ' hot' : ''));
+      v.edges.down.setAttribute('class', 'edge' + (st.flow === 'body' ? ' hot' : ''));
+      v.edges.out.setAttribute('class', 'edge' + (st.flow === 'exit' || st.flow === 'after' ? ' hotexit' : ''));
+      if (st.flow === 'start') v.token.classList.remove('exit');
+    } else if (scene.vis === 'range') {
+      v.tiles.forEach(function (t, i) {
+        t.classList.toggle('on', i < (st.tiles || 0));
+        t.classList.toggle('cur', st.cur === i);
+      });
+      v.excl.style.visibility = st.showExcl ? 'visible' : 'hidden';
+    } else if (scene.vis === 'scan') {
+      v.cells.forEach(function (c, i) {
+        c.classList.toggle('cur', i === st.scanIdx);
+        c.classList.toggle('done', st.scanIdx > i);
+        c.classList.toggle('hit', !!st.hit && i === st.scanIdx);
+      });
+    } else if (scene.vis === 'accum') {
+      v.big.textContent = String(st.bar);
+      v.fill.style.width = (st.bar / v.max * 100) + '%';
+      v.chips.forEach(function (c, i) { c.classList.toggle('on', i < (st.chips || 0)); });
+    } else if (scene.vis === 'grid') {
+      v.cells.forEach(function (c, i) {
+        c.classList.toggle('fill', i < (st.cells || 0));
+        c.classList.toggle('cur', st.curCell === i);
+      });
+    }
+  }
+
+  /* ---------- slide / step navigation ---------- */
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var uis = slides.map(function (s) {
+    var name = s.getAttribute('data-scene');
+    if (!name || !SCENES[name]) return null;
+    return buildScene(s, SCENES[name]);
+  });
+  var stepCount = uis.map(function (ui) { return ui ? ui.scene.steps.length : 1; });
+
+  var current = 0;
+  var step = 0;
+
+  var dotsContainer = document.getElementById('dots');
+  slides.forEach(function () { dotsContainer.appendChild(el('div', 'dot')); });
+  var dots = Array.prototype.slice.call(dotsContainer.querySelectorAll('.dot'));
+
+  var DOT_SIZE = 7;
+  var liquid = el('div');
+  liquid.id = 'liquid';
+  dotsContainer.appendChild(liquid);
+
+  var stepDots = document.getElementById('stepdots');
+  var liquidTimer = null;
+
+  function dotLeft(i) { return dots[i].offsetLeft; }
+
+  function placeLiquid(i, animate) {
+    var targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
+
+    if (!animate || reduceMotion) {
+      liquid.style.transition = 'none';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+      liquid.offsetHeight; // flush the style change before re-enabling transitions
+      liquid.style.transition = '';
+      return;
+    }
+
+    // Phase 1: stretch into a liquid bridge spanning the old and new positions.
+    var fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
+    var bridgeLeft = Math.min(fromLeft, targetLeft);
+    var bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
+
+    liquid.style.transition = 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)';
+    liquid.style.left = bridgeLeft + 'px';
+    liquid.style.width = bridgeWidth + 'px';
+
+    // Phase 2: spring back into a droplet at the new dot.
+    liquidTimer = window.setTimeout(function () {
+      liquidTimer = null;
+      liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+    }, 220);
+  }
+
+  function renderStepDots() {
+    stepDots.innerHTML = '';
+    var n = stepCount[current];
+    if (!uis[current] || n <= 1) return;
+    for (var i = 0; i < n; i++) {
+      var d = el('div', 'sd' + (i <= step ? ' done' : ''));
+      stepDots.appendChild(d);
+    }
+  }
+
+  function renderStep(animate) {
+    var ui = uis[current];
+    if (ui) applyStep(ui, step, animate);
+    renderStepDots();
+  }
+
+  function goSlide(i, backwards) {
+    slides[current].classList.remove('active');
+    current = (i + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    step = backwards ? stepCount[current] - 1 : 0;
+    placeLiquid(current, true);
+    renderStep(false);
+  }
+
+  function next() {
+    if (step < stepCount[current] - 1) {
+      step++;
+      renderStep(true);
+    } else {
+      goSlide(current + 1, false);
+    }
+  }
+
+  function prev() {
+    if (step > 0) {
+      step--;
+      renderStep(true);
+    } else {
+      goSlide(current - 1, true);
+    }
+  }
+
+  placeLiquid(0, false);
+  renderStep(false);
+  window.addEventListener('resize', function () {
+    placeLiquid(current, false);
+    renderStep(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+  document.addEventListener('click', function () { next(); });
+})();
+</script>
+
+</body>
+</html>
