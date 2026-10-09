@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 5 — Functions</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-soft-2: rgba(0, 113, 227, 0.07);
+    --warn: #c2410c;
+    --ok: #1d7a3e;
+    --console-bg: #1d1d1f;
+    --console-text: #f5f5f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 9vw;
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  p.body {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+  p.body b { font-weight: 600; }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2em 2.2em;
+    width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: inherit;
+    line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+  code { font-variant-ligatures: none; }
+
+  table { border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td code { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+
+  /* ---------- animated slide layout ---------- */
+  .slide.anim {
+    justify-content: flex-start;
+    padding: 5.5vh 5vw 11vh;
+  }
+  .anim h2 {
+    font-size: clamp(24px, 2.5vw, 38px);
+    margin-bottom: 6px;
+  }
+  .anim .lead {
+    font-size: clamp(14px, 1.25vw, 20px);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    max-width: 90ch;
+    margin-bottom: 2.2vh;
+  }
+  .stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(0, 0.8fr);
+    gap: 2vw;
+    align-items: start;
+  }
+  .stage.no-vis { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+
+  .panel-label {
+    font-size: clamp(10px, 0.85vw, 13px);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.8vh;
+  }
+
+  /* code with sliding highlight band */
+  .codebox {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 14px;
+    padding: 1.1em 1.2em;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(13px, 1.15vw, 19px);
+    line-height: 1.75;
+    overflow: hidden;
+    /* These lines are divs, not <code>, so the global rule misses them and the
+       mono font would ligate <= into a single glyph students can't type. */
+    font-variant-ligatures: none;
+  }
+  .band {
+    position: absolute;
+    /* The JS positions the band with translateY(line.offsetTop), and offsetTop is
+       measured from the codebox border box. Pin top to 0 so both use the same
+       origin — without it the band's static position sits below the codebox's
+       top padding and that padding gets counted twice. */
+    top: 0;
+    left: 0.45em;
+    right: 0.45em;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    box-shadow: inset 2px 0 0 var(--accent);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+    opacity: 0;
+    z-index: 0;
+  }
+  .band.exit { background: rgba(194, 65, 12, 0.14); box-shadow: inset 2px 0 0 var(--warn); }
+  .codeline {
+    position: relative;
+    z-index: 1;
+    white-space: pre;
+    opacity: 0.38;
+    transition: opacity 0.25s ease;
+  }
+  .codeline.on { opacity: 1; }
+  .codeline.skip { opacity: 0.18; text-decoration: line-through; }
+
+  .caption {
+    margin-top: 1.4vh;
+    font-size: clamp(12px, 1.05vw, 17px);
+    line-height: 1.4;
+    color: var(--text-secondary);
+    min-height: 2.8em;
+  }
+  .caption b { color: var(--text-primary); font-weight: 600; }
+  .caption .t { color: var(--ok); font-weight: 600; }
+  .caption .f { color: var(--warn); font-weight: 600; }
+
+  /* variable panel */
+  .vars { display: flex; flex-wrap: wrap; gap: 0.7vw 0.7vw; margin-bottom: 2.2vh; }
+  .vbox {
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    padding: 0.5em 0.8em;
+    min-width: 5.2em;
+    background: #fff;
+  }
+  .vbox .vn {
+    font-size: clamp(10px, 0.85vw, 13px);
+    color: var(--text-secondary);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .vbox .vv {
+    font-size: clamp(16px, 1.5vw, 24px);
+    font-weight: 600;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .vbox.flash { animation: flash 0.5s ease; border-color: var(--accent); }
+  @keyframes flash {
+    0% { background: var(--accent-soft); transform: scale(1); }
+    35% { background: var(--accent-soft); transform: scale(1.07); }
+    100% { background: #fff; transform: scale(1); }
+  }
+
+  /* output panel */
+  .console {
+    background: var(--console-bg);
+    color: var(--console-text);
+    border-radius: 14px;
+    padding: 0.9em 1em;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.1vw, 18px);
+    line-height: 1.6;
+    min-height: 6em;
+    max-height: 34vh;
+    overflow: hidden;
+    font-variant-ligatures: none;
+  }
+  .console .oline { animation: rise 0.3s ease both; white-space: pre; }
+  .console .oline.ghost { color: #8e8e93; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* range tiles */
+  .tiles { display: flex; align-items: center; gap: 0.5vw; flex-wrap: wrap; }
+  .tile {
+    width: 2.3em; height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    border: 1px solid var(--divider);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(14px, 1.3vw, 21px);
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+  }
+  .tile.on { opacity: 1; transform: scale(1); background: var(--accent-soft-2); }
+  .tile.cur { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tile.excl {
+    opacity: 1; transform: scale(1);
+    color: var(--text-secondary);
+    text-decoration: line-through;
+    background: repeating-linear-gradient(45deg, #fafafa, #fafafa 4px, #f0f0f0 4px, #f0f0f0 8px);
+    margin-left: 1.1em;
+  }
+  .tilenote { font-size: clamp(11px, 0.95vw, 15px); color: var(--text-secondary); margin-top: 1vh; }
+
+  /* string scanner */
+  .scan { display: flex; gap: 0.3vw; flex-wrap: wrap; }
+  .cell {
+    width: 1.9em; height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--divider);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(14px, 1.25vw, 20px);
+    background: #fff;
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+  .cell.done { background: var(--accent-soft-2); color: var(--text-secondary); }
+  .cell.cur { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-4px); }
+  .cell.hit { box-shadow: 0 0 0 2px var(--ok) inset; }
+
+  /* accumulator bar */
+  .accum .big {
+    font-size: clamp(28px, 3vw, 46px);
+    font-weight: 700;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .bartrack {
+    margin-top: 1vh;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .barfill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .barticks { display: flex; gap: 0.4vw; margin-top: 0.8vh; flex-wrap: wrap; }
+  .chip {
+    font-size: clamp(11px, 0.95vw, 15px);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    border: 1px solid var(--divider);
+    border-radius: 999px;
+    padding: 0.15em 0.6em;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .chip.on { opacity: 1; }
+
+  /* nested grid */
+  .ngrid { display: grid; grid-template-columns: repeat(4, 2.5em); gap: 0.35vw; }
+  .gcell {
+    height: 2.3em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.1vw, 18px);
+    border: 1px solid var(--divider);
+    color: var(--text-secondary);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  .gcell.head { border: none; color: var(--text-secondary); font-size: clamp(11px, 0.9vw, 15px); }
+  .gcell.fill { background: var(--accent-soft); color: var(--text-primary); }
+  .gcell.cur { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.06); }
+  .gcell.rowdone { background: var(--accent-soft-2); }
+
+  /* flow diagram */
+  .flow svg { width: 100%; max-width: 15vw; height: auto; }
+  .flow .nd { fill: #fff; stroke: var(--divider); stroke-width: 2; transition: fill 0.2s ease, stroke 0.2s ease; }
+  .flow .nd.on { fill: var(--accent-soft); stroke: var(--accent); }
+  .flow .nd.onexit { fill: rgba(194, 65, 12, 0.14); stroke: var(--warn); }
+  .flow text { font-size: 13px; fill: var(--text-primary); font-family: -apple-system, "Segoe UI", sans-serif; }
+  .flow .lbl { font-size: 11px; fill: var(--text-secondary); }
+  .flow path.edge { fill: none; stroke: var(--divider); stroke-width: 2; }
+  .flow path.edge.hot { stroke: var(--accent); }
+  .flow path.edge.hotexit { stroke: var(--warn); }
+  .flow .token {
+    fill: var(--accent);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .flow .token.exit { fill: var(--warn); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .band, .barfill, .tile, .cell, .gcell, .token, .codeline { transition: none; }
+    .vbox.flash { animation: none; border-color: var(--accent); }
+    .console .oline { animation: none; }
+  }
+
+  #dots {
+    position: fixed;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    height: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--divider); }
+  #liquid {
+    position: absolute;
+    top: 0;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  #stepdots {
+    position: fixed;
+    bottom: 6.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    height: 4px;
+  }
+  #stepdots .sd { width: 4px; height: 4px; border-radius: 50%; background: var(--divider); }
+  #stepdots .sd.done { background: var(--accent); }
+
+  /* ---------- interactive exercises ---------- */
+  .exercise pre.ex-code { margin-top: 1vh; }
+  .reveal-btn {
+    margin-top: 2.4vh;
+    align-self: flex-start;
+    font: inherit;
+    font-size: clamp(15px, 1.3vw, 19px);
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 999px;
+    padding: 0.6em 1.5em;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .reveal-btn:hover { transform: translateY(-1px); }
+  .reveal-btn:active { transform: translateY(0); }
+
+  .ex-answer {
+    margin-top: 0;
+    max-width: 60ch;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+  }
+  .ex-answer.show { opacity: 1; max-height: 20em; margin-top: 2vh; }
+  .ex-answer-line {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(18px, 1.8vw, 26px);
+    font-weight: 600;
+    color: var(--ok);
+    margin-bottom: 0.25em;
+  }
+  .ex-explain {
+    color: var(--text-secondary);
+    font-size: clamp(15px, 1.3vw, 19px);
+    line-height: 1.5;
+    max-width: 55ch;
+    margin-top: 0.6em;
+  }
+
+  .match-wrap { display: flex; gap: 6vw; margin-top: 3vh; }
+  .match-col { display: flex; flex-direction: column; gap: 1.2vh; }
+  .match-call {
+    display: flex; align-items: center; gap: 1em;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(16px, 1.5vw, 22px);
+    border: 1px dashed var(--divider);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    min-width: 13em;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .match-call.correct { border-color: var(--ok); border-style: solid; background: rgba(29, 122, 62, 0.07); }
+  .match-call.wrong { border-color: var(--warn); animation: shake 0.3s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .drop-slot {
+    margin-left: auto;
+    width: 2.2em; height: 2.2em;
+    border-radius: 10px;
+    border: 1px solid var(--divider);
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .drop-slot.filled { border-style: solid; border-color: var(--text-secondary); }
+  .chip-drag {
+    width: 2.2em; height: 2.2em;
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-weight: 700;
+    font-size: clamp(16px, 1.5vw, 22px);
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    cursor: grab;
+  }
+  .chip-drag.used { opacity: 0.25; pointer-events: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ex-answer, .match-call { transition: none; }
+    .match-call.wrong { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 5</div>
+  <h1>Functions</h1>
+</section>
+
+<!-- 1 -->
+<section class="slide anim" data-scene="s1">
+  <h2>Why functions</h2>
+  <p class="lead">Name a block of code and run it by calling that name, instead of retyping it.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 2 -->
+<section class="slide anim" data-scene="s2">
+  <h2>Parameters — feeding information in</h2>
+  <p class="lead"><code class="inline">name</code> only exists inside <code class="inline">greet</code>, set to whatever the caller passes.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 3 -->
+<section class="slide anim" data-scene="s3">
+  <h2><code class="inline">return</code> — sending a value back</h2>
+  <p class="lead"><code class="inline">return</code> hands a value to the caller and ends the function immediately.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 4 -->
+<section class="slide anim" data-scene="s4">
+  <h2>Functions without <code class="inline">return</code></h2>
+  <p class="lead">No <code class="inline">return</code> statement means the function hands back <code class="inline">None</code>.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 4b: static table -->
+<section class="slide split">
+  <div class="content-col">
+    <h2><code class="inline">print()</code> vs <code class="inline">return</code></h2>
+    <p class="body">They solve <b>different</b> problems.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th></th><th>Does</th></tr>
+      <tr><td><code>print()</code></td><td>shows something on screen</td></tr>
+      <tr><td><code>return</code></td><td>hands a value back to the caller</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide anim" data-scene="s5">
+  <h2>Default parameter values</h2>
+  <p class="lead">A parameter with a default can be <b>skipped</b> by the caller.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 6 -->
+<section class="slide anim" data-scene="s6">
+  <h2>Scope — variables inside a function stay inside</h2>
+  <p class="lead"><code class="inline">result</code> is created fresh each call and gone once the function returns.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 7 -->
+<section class="slide anim" data-scene="s7">
+  <h2>Calling functions from a loop</h2>
+  <p class="lead">Call a function once per pass of a <code class="inline">for</code> loop.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- 8 -->
+<section class="slide anim" data-scene="s8">
+  <h2>One function calling another</h2>
+  <p class="lead"><code class="inline">count_vowels</code> doesn't need to know <i>how</i> <code class="inline">is_vowel</code> decides — only what it returns.</p>
+  <div class="stage"></div>
+</section>
+
+<!-- ex1 -->
+<section class="slide exercise">
+  <h2>Try it — predict the output</h2>
+  <p class="lead">Work out what prints before you reveal it.</p>
+  <pre class="ex-code"><code>def mystery(x):
+    return x * 2 + 1
+
+print(mystery(3))</code></pre>
+  <button class="reveal-btn" data-target="ex1-answer">Reveal answer</button>
+  <div class="ex-answer" id="ex1-answer">
+    <div class="ex-answer-line">&rarr; <code>7</code></div>
+    <p class="ex-explain"><code class="inline">mystery(3)</code> returns <code class="inline">3 * 2 + 1</code>, which is 7.</p>
+  </div>
+</section>
+
+<!-- ex2 -->
+<section class="slide exercise">
+  <h2>Try it — predict the output</h2>
+  <p class="lead">Two calls, one default parameter.</p>
+  <pre class="ex-code"><code>def shout(word="hi"):
+    return word.upper() + "!"
+
+print(shout())
+print(shout("bye"))</code></pre>
+  <button class="reveal-btn" data-target="ex2-answer">Reveal answer</button>
+  <div class="ex-answer" id="ex2-answer">
+    <div class="ex-answer-line">&rarr; <code>HI!</code></div>
+    <div class="ex-answer-line">&rarr; <code>BYE!</code></div>
+    <p class="ex-explain">The first call omits <code class="inline">word</code>, so the default <code class="inline">"hi"</code> is used. The second supplies <code class="inline">"bye"</code>, overriding it.</p>
+  </div>
+</section>
+
+<!-- ex3: drag and drop -->
+<section class="slide exercise">
+  <h2>Match each call to its return value</h2>
+  <p class="lead">Drag a value onto the call that produces it. <code class="inline">def square(n): return n * n</code></p>
+  <div class="match-wrap">
+    <div class="match-col">
+      <div class="match-call" data-answer="9">square(3)<span class="drop-slot"></span></div>
+      <div class="match-call" data-answer="0">square(0)<span class="drop-slot"></span></div>
+      <div class="match-call" data-answer="4">square(-2)<span class="drop-slot"></span></div>
+    </div>
+    <div class="match-col">
+      <div class="chip-drag" draggable="true" data-value="4">4</div>
+      <div class="chip-drag" draggable="true" data-value="9">9</div>
+      <div class="chip-drag" draggable="true" data-value="0">0</div>
+    </div>
+  </div>
+  <button class="reveal-btn" id="match-reset">Reset</button>
+</section>
+
+<section class="slide">
+  <h2>Next up</h2>
+  <p class="body">Run the examples in <code class="inline">workshop_5/</code>, then try the homework.</p>
+</section>
+
+<div id="stepdots"></div>
+<div id="dots"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     SCENES — each one is a trace. Every step says which line is
+     executing, the variable values at that moment, the output
+     line appended (if any) and any extra visual state.
+     ============================================================ */
+
+  var SCENES = {
+
+    s1: {
+      code: [
+        "def greet():",
+        "    print(\"Hello!\")",
+        "    print(\"Welcome to Python.\")",
+        "",
+        "greet()",
+        "greet()"
+      ],
+      varOrder: [],
+      vis: null,
+      steps: [
+        { line: 0, vars: {}, note: "<code>def greet():</code> only <b>defines</b> the function — nothing runs yet." },
+        { line: 4, vars: {}, note: "<code>greet()</code> <b>calls</b> it — jump into the body." },
+        { line: 1, vars: {}, out: "Hello!" },
+        { line: 2, vars: {}, out: "Welcome to Python." },
+        { line: 5, vars: {}, note: "A second call runs the body again, from the top." },
+        { line: 1, vars: {}, out: "Hello!" },
+        { line: 2, vars: {}, out: "Welcome to Python.", note: "Two calls, same two lines of code — four lines of output." }
+      ]
+    },
+
+    s2: {
+      code: [
+        "def greet(name):",
+        "    print(f\"Hello, {name}!\")",
+        "",
+        "greet(\"Nina\")",
+        "greet(\"Luka\")"
+      ],
+      varOrder: ["name"],
+      vis: null,
+      steps: [
+        { line: 3, vars: { name: "'Nina'" }, changed: ["name"], note: "<b>name</b> is a parameter — set to whatever this call passes in." },
+        { line: 1, vars: { name: "'Nina'" }, out: "Hello, Nina!" },
+        { line: 4, vars: { name: "'Luka'" }, changed: ["name"], note: "Next call, new value — <b>name</b> is reset." },
+        { line: 1, vars: { name: "'Luka'" }, out: "Hello, Luka!" }
+      ]
+    },
+
+    s3: {
+      code: [
+        "def square(number):",
+        "    return number * number",
+        "",
+        "result = square(4)",
+        "print(result)"
+      ],
+      varOrder: ["number", "result"],
+      vis: null,
+      steps: [
+        { line: 3, vars: { number: 4 }, changed: ["number"], note: "Call <code>square(4)</code> &rarr; jump in, <b>number</b> is 4." },
+        { line: 1, vars: { number: 4 }, note: "<code>4 * 4</code> is 16. <b>return</b> sends it back and ends the function here." },
+        { line: 3, vars: { number: 4, result: 16 }, changed: ["result"], note: "Back at the caller: <b>result</b> is set to the returned value." },
+        { line: 4, vars: { number: 4, result: 16 }, out: "16" }
+      ]
+    },
+
+    s4: {
+      code: [
+        "def greet(name):",
+        "    print(f\"Hello, {name}!\")",
+        "",
+        "result = greet(\"Nina\")",
+        "print(result)"
+      ],
+      varOrder: ["name", "result"],
+      vis: null,
+      steps: [
+        { line: 3, vars: { name: "'Nina'" }, changed: ["name"], note: "Call <code>greet(\"Nina\")</code>." },
+        { line: 1, vars: { name: "'Nina'" }, out: "Hello, Nina!" },
+        { line: 3, vars: { name: "'Nina'", result: "None" }, changed: ["result"], note: "<b>greet</b> has no <code>return</code> statement, so Python hands back <b>None</b>." },
+        { line: 4, vars: { name: "'Nina'", result: "None" }, out: "None" }
+      ]
+    },
+
+    s5: {
+      code: [
+        "def greet(name, greeting=\"Hello\"):",
+        "    print(f\"{greeting}, {name}!\")",
+        "",
+        "greet(\"Nina\")",
+        "greet(\"Luka\", \"Hi\")"
+      ],
+      varOrder: ["name", "greeting"],
+      vis: null,
+      steps: [
+        { line: 3, vars: { name: "'Nina'", greeting: "'Hello'" }, changed: ["name", "greeting"], note: "<b>greeting</b> omitted &rarr; falls back to the default <code>\"Hello\"</code>." },
+        { line: 1, vars: { name: "'Nina'", greeting: "'Hello'" }, out: "Hello, Nina!" },
+        { line: 4, vars: { name: "'Luka'", greeting: "'Hi'" }, changed: ["name", "greeting"], note: "<b>greeting</b> supplied explicitly &rarr; overrides the default." },
+        { line: 1, vars: { name: "'Luka'", greeting: "'Hi'" }, out: "Hi, Luka!" }
+      ]
+    },
+
+    s6: {
+      code: [
+        "def square(number):",
+        "    result = number * number",
+        "    return result",
+        "",
+        "square(5)",
+        "print(result)"
+      ],
+      varOrder: ["number", "result"],
+      vis: null,
+      steps: [
+        { line: 4, vars: { number: 5 }, changed: ["number"], note: "Call <code>square(5)</code> &rarr; <b>number</b> is 5." },
+        { line: 1, vars: { number: 5, result: 25 }, changed: ["result"], note: "<b>result</b> is <b>local</b> — created fresh inside <code>square</code>." },
+        { line: 2, vars: { number: 5, result: 25 }, note: "<code>return result</code> ends the function. Its local copy of <b>result</b> is discarded." },
+        { line: 5, vars: {}, note: "Outside <code>square</code>, <b>result</b> never existed &rarr; <code>NameError: name 'result' is not defined</code>." }
+      ]
+    },
+
+    s7: {
+      code: [
+        "def square(number):",
+        "    return number * number",
+        "",
+        "for n in range(1, 5):",
+        "    print(f\"{n} squared is {square(n)}\")"
+      ],
+      varOrder: ["n", "number"],
+      vis: "range",
+      range: { values: [1, 2, 3, 4], excluded: 5, note: "range(1, 5) &rarr; 1 2 3 4." },
+      steps: [
+        { line: 3, vars: { n: 1 }, changed: ["n"], tiles: 1, cur: 0, note: "Loop pass 1: <b>n = 1</b>." },
+        { line: 0, vars: { n: 1, number: 1 }, changed: ["number"], tiles: 1, cur: 0, note: "<code>square(n)</code> jumps in — <b>number</b> gets <b>n</b>'s value." },
+        { line: 4, vars: { n: 1, number: 1 }, out: "1 squared is 1", tiles: 1, cur: 0 },
+        { line: 3, vars: { n: 2, number: 1 }, changed: ["n"], tiles: 2, cur: 1 },
+        { line: 0, vars: { n: 2, number: 2 }, changed: ["number"], tiles: 2, cur: 1 },
+        { line: 4, vars: { n: 2, number: 2 }, out: "2 squared is 4", tiles: 2, cur: 1 },
+        { line: 3, vars: { n: 3, number: 2 }, changed: ["n"], tiles: 3, cur: 2 },
+        { line: 0, vars: { n: 3, number: 3 }, changed: ["number"], tiles: 3, cur: 2 },
+        { line: 4, vars: { n: 3, number: 3 }, out: "3 squared is 9", tiles: 3, cur: 2 },
+        { line: 3, vars: { n: 4, number: 3 }, changed: ["n"], tiles: 4, cur: 3 },
+        { line: 0, vars: { n: 4, number: 4 }, changed: ["number"], tiles: 4, cur: 3 },
+        { line: 4, vars: { n: 4, number: 4 }, out: "4 squared is 16", tiles: 4, cur: 3 },
+        { line: 3, vars: { n: 4, number: 4 }, tiles: 4, showExcl: true, note: "<code>range(1, 5)</code> exhausted &rarr; the loop ends. <b>5 was never used.</b>" }
+      ]
+    },
+
+    s8: {
+      code: [
+        "def is_vowel(letter):",
+        "    return letter in \"aeiou\"",
+        "",
+        "def count_vowels(word):",
+        "    total = 0",
+        "    for letter in word:",
+        "        if is_vowel(letter):",
+        "            total += 1",
+        "    return total",
+        "",
+        "print(count_vowels(\"programming\"))"
+      ],
+      varOrder: ["letter", "total"],
+      vis: "scan",
+      scan: { text: "programming" },
+      steps: [
+        { line: 4, vars: { total: 0 }, changed: ["total"], scanIdx: -1, note: "<code>count_vowels</code> starts its own counter at 0." },
+        { line: 6, vars: { total: 0, letter: "'p'" }, changed: ["letter"], scanIdx: 0, note: "<code>is_vowel('p')</code> returns <span class='f'>False</span> — <b>count_vowels</b> doesn't need to know how, only what it returns." },
+        { line: 6, vars: { total: 0, letter: "'r'" }, changed: ["letter"], scanIdx: 1, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 0, letter: "'o'" }, changed: ["letter"], scanIdx: 2, hit: true, note: "<code>is_vowel('o')</code> returns <span class='t'>True</span>!" },
+        { line: 7, vars: { total: 1, letter: "'o'" }, changed: ["total"], scanIdx: 2, hit: true, note: "<b>total</b> becomes 1." },
+        { line: 6, vars: { total: 1, letter: "'g'" }, changed: ["letter"], scanIdx: 3, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 1, letter: "'r'" }, changed: ["letter"], scanIdx: 4, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 1, letter: "'a'" }, changed: ["letter"], scanIdx: 5, hit: true, note: "<span class='t'>True</span>!" },
+        { line: 7, vars: { total: 2, letter: "'a'" }, changed: ["total"], scanIdx: 5, hit: true, note: "<b>total</b> becomes 2." },
+        { line: 6, vars: { total: 2, letter: "'m'" }, changed: ["letter"], scanIdx: 6, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 2, letter: "'m'" }, changed: ["letter"], scanIdx: 7, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 2, letter: "'i'" }, changed: ["letter"], scanIdx: 8, hit: true, note: "<span class='t'>True</span>!" },
+        { line: 7, vars: { total: 3, letter: "'i'" }, changed: ["total"], scanIdx: 8, hit: true, note: "<b>total</b> becomes 3." },
+        { line: 6, vars: { total: 3, letter: "'n'" }, changed: ["letter"], scanIdx: 9, note: "<span class='f'>False</span>." },
+        { line: 6, vars: { total: 3, letter: "'g'" }, changed: ["letter"], scanIdx: 10, note: "<span class='f'>False</span>." },
+        { line: 8, vars: { total: 3, letter: "'g'" }, scanIdx: 11, note: "Every character visited &rarr; <code>count_vowels</code> returns 3 to its caller." },
+        { line: 10, vars: { total: 3, letter: "'g'" }, out: "3", scanIdx: 11, note: "<b>Small functions calling each other</b> read easier than one long block." }
+      ]
+    }
+  };
+
+  /* ============================================================
+     ENGINE
+     ============================================================ */
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function labelled(cls, label) {
+    var wrap = el('div', cls);
+    wrap.appendChild(el('div', 'panel-label', label));
+    return wrap;
+  }
+
+  var FLOW_POS = {
+    cond:  [100, 46],
+    body:  [100, 140],
+    mid:   [100, 118],
+    back:  [26, 112],
+    exit:  [172, 46],
+    after: [172, 92]
+  };
+
+  function buildFlow(kind) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 220');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Loop flow diagram');
+
+    function node(tag, attrs, cls) {
+      var n = document.createElementNS(ns, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      if (cls) n.setAttribute('class', cls);
+      svg.appendChild(n);
+      return n;
+    }
+    function text(x, y, s, cls) {
+      var t = document.createElementNS(ns, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', 'middle');
+      if (cls) t.setAttribute('class', cls);
+      t.textContent = s;
+      svg.appendChild(t);
+      return t;
+    }
+
+    // back arrow (body -> condition)
+    var back = node('path', { d: 'M 100 164 L 100 180 L 26 180 L 26 46 L 70 46' }, 'edge');
+    // cond -> body
+    var down = node('path', { d: 'M 100 68 L 100 116' }, 'edge');
+    // cond -> exit (False)
+    var out = node('path', { d: 'M 130 46 L 168 46 L 168 84' }, 'edge');
+
+    var diamond = node('polygon', { points: '100,24 130,46 100,68 70,46' }, 'nd');
+    var body = node('rect', { x: '62', y: '116', width: '76', height: '48', rx: '10' }, 'nd');
+    var after = node('rect', { x: '140', y: '84', width: '56', height: '34', rx: '10' }, 'nd');
+
+    text(100, 50, 'check', '');
+    text(100, 145, 'body', '');
+    text(168, 105, 'after', 'lbl');
+    text(46, 40, 'True', 'lbl');
+    text(150, 36, 'False', 'lbl');
+
+    var token = document.createElementNS(ns, 'circle');
+    token.setAttribute('r', '7');
+    token.setAttribute('class', 'token');
+    token.setAttribute('cx', '0');
+    token.setAttribute('cy', '0');
+    svg.appendChild(token);
+
+    var wrap = labelled('flow', kind === 'break' ? 'break jumps out' : (kind === 'continue' ? 'continue jumps back' : 'flow'));
+    wrap.appendChild(svg);
+    return {
+      root: wrap,
+      token: token,
+      diamond: diamond,
+      body: body,
+      after: after,
+      edges: { back: back, down: down, out: out }
+    };
+  }
+
+  function buildScene(section, scene) {
+    var stage = section.querySelector('.stage');
+    stage.innerHTML = '';
+    if (!scene.vis) stage.classList.add('no-vis');
+
+    // column 1: code + caption
+    var col1 = el('div');
+    col1.appendChild(el('div', 'panel-label', 'code'));
+    var codebox = el('div', 'codebox');
+    var band = el('div', 'band');
+    codebox.appendChild(band);
+    var lines = [];
+    scene.code.forEach(function (src) {
+      var ln = el('div', 'codeline', src);
+      codebox.appendChild(ln);
+      lines.push(ln);
+    });
+    col1.appendChild(codebox);
+    var caption = el('div', 'caption');
+    col1.appendChild(caption);
+    stage.appendChild(col1);
+
+    // column 2: variables + output
+    var col2 = el('div');
+    var varsWrap = labelled('', 'variables');
+    var vars = el('div', 'vars');
+    var vboxes = {};
+    scene.varOrder.forEach(function (name) {
+      var b = el('div', 'vbox');
+      b.appendChild(el('div', 'vn', name));
+      var v = el('div', 'vv', '—');
+      b.appendChild(v);
+      vars.appendChild(b);
+      vboxes[name] = { box: b, val: v };
+    });
+    varsWrap.appendChild(vars);
+    col2.appendChild(varsWrap);
+    var outWrap = labelled('', 'output');
+    var console_ = el('div', 'console');
+    outWrap.appendChild(console_);
+    col2.appendChild(outWrap);
+    stage.appendChild(col2);
+
+    var visual = null;
+    if (scene.vis) {
+      var col3 = el('div');
+      if (scene.vis === 'flow') {
+        visual = buildFlow(scene.flowKind);
+        col3.appendChild(visual.root);
+      } else if (scene.vis === 'range') {
+        var w = labelled('', 'the range');
+        var tiles = el('div', 'tiles');
+        var tileEls = [];
+        scene.range.values.forEach(function (v) {
+          var t = el('div', 'tile', String(v));
+          tiles.appendChild(t);
+          tileEls.push(t);
+        });
+        var excl = el('div', 'tile excl', String(scene.range.excluded));
+        excl.style.visibility = 'hidden';
+        tiles.appendChild(excl);
+        w.appendChild(tiles);
+        w.appendChild(el('div', 'tilenote', '')).innerHTML = scene.range.note;
+        col3.appendChild(w);
+        visual = { tiles: tileEls, excl: excl };
+      } else if (scene.vis === 'scan') {
+        var sw = labelled('', 'the string');
+        var scan = el('div', 'scan');
+        var cells = [];
+        scene.scan.text.split('').forEach(function (ch) {
+          var c = el('div', 'cell', ch);
+          scan.appendChild(c);
+          cells.push(c);
+        });
+        sw.appendChild(scan);
+        col3.appendChild(sw);
+        visual = { cells: cells };
+      } else if (scene.vis === 'accum') {
+        var aw = labelled('accum', 'running total');
+        var big = el('div', 'big', '0');
+        aw.appendChild(big);
+        var track = el('div', 'bartrack');
+        var fill = el('div', 'barfill');
+        track.appendChild(fill);
+        aw.appendChild(track);
+        var ticks = el('div', 'barticks');
+        var chips = [];
+        ['+1', '+2', '+3', '+4'].forEach(function (s) {
+          var c = el('div', 'chip', s);
+          ticks.appendChild(c);
+          chips.push(c);
+        });
+        aw.appendChild(ticks);
+        col3.appendChild(aw);
+        visual = { big: big, fill: fill, chips: chips, max: scene.accum.max };
+      } else if (scene.vis === 'grid') {
+        var gw = labelled('', 'row x col');
+        var grid = el('div', 'ngrid');
+        grid.appendChild(el('div', 'gcell head', ''));
+        [1, 2, 3].forEach(function (c) { grid.appendChild(el('div', 'gcell head', 'c' + c)); });
+        var gcells = [];
+        [1, 2, 3].forEach(function (r) {
+          grid.appendChild(el('div', 'gcell head', 'r' + r));
+          [1, 2, 3].forEach(function (c) {
+            var g = el('div', 'gcell', String(r * c));
+            grid.appendChild(g);
+            gcells.push(g);
+          });
+        });
+        gw.appendChild(grid);
+        col3.appendChild(gw);
+        visual = { cells: gcells };
+      }
+      stage.appendChild(col3);
+    }
+
+    return {
+      scene: scene,
+      lines: lines,
+      band: band,
+      caption: caption,
+      vboxes: vboxes,
+      console: console_,
+      visual: visual,
+      lastRendered: -1
+    };
+  }
+
+  function applyStep(ui, index, animate) {
+    var scene = ui.scene;
+    var steps = scene.steps;
+    var st = steps[index];
+
+    // --- line highlight band ---
+    var target = ui.lines[st.line];
+    ui.lines.forEach(function (ln, i) {
+      ln.classList.toggle('on', i === st.line);
+      ln.classList.toggle('skip', !!(st.skip && st.skip.indexOf(i) !== -1));
+    });
+    if (!animate || reduceMotion) ui.band.style.transition = 'none';
+    ui.band.style.height = target.offsetHeight + 'px';
+    ui.band.style.transform = 'translateY(' + target.offsetTop + 'px)';
+    ui.band.style.opacity = '1';
+    ui.band.classList.toggle('exit', st.flow === 'exit' || st.flow === 'after');
+    if (!animate || reduceMotion) {
+      ui.band.offsetHeight;
+      ui.band.style.transition = '';
+    }
+
+    // --- caption ---
+    ui.caption.innerHTML = st.note || '';
+
+    // --- variables ---
+    Object.keys(ui.vboxes).forEach(function (name) {
+      var slot = ui.vboxes[name];
+      var has = Object.prototype.hasOwnProperty.call(st.vars, name);
+      slot.val.textContent = has ? String(st.vars[name]) : '—';
+      slot.box.style.opacity = has ? '1' : '0.35';
+      slot.box.classList.remove('flash');
+    });
+    if (animate && !reduceMotion && st.changed) {
+      st.changed.forEach(function (name) {
+        var slot = ui.vboxes[name];
+        if (!slot) return;
+        void slot.box.offsetWidth;
+        slot.box.classList.add('flash');
+      });
+    } else if (st.changed) {
+      st.changed.forEach(function (name) {
+        if (ui.vboxes[name]) ui.vboxes[name].box.classList.add('flash');
+      });
+    }
+
+    // --- output (rebuilt from the trace so stepping back is exact) ---
+    ui.console.innerHTML = '';
+    for (var i = 0; i <= index; i++) {
+      if (steps[i].out === undefined) continue;
+      var line = el('div', 'oline', steps[i].out);
+      if (steps[i].ghostLast) line.classList.add('ghost');
+      if (!animate || reduceMotion || i < index) line.style.animation = 'none';
+      ui.console.appendChild(line);
+    }
+
+    // --- visual set-piece ---
+    var v = ui.visual;
+    if (!v) return;
+
+    if (scene.vis === 'flow') {
+      var key = st.flow === 'start' ? 'cond' : (st.flow || 'cond');
+      if (st.flow === 'back') key = 'back';
+      if (st.flow === 'exit') key = st.exitMid ? 'exit' : 'exit';
+      var pos = FLOW_POS[key] || FLOW_POS.cond;
+      v.token.setAttribute('transform', 'translate(' + pos[0] + ',' + pos[1] + ')');
+      v.token.classList.toggle('exit', st.flow === 'exit' || st.flow === 'after');
+      v.diamond.setAttribute('class', 'nd' + (st.flow === 'cond' || st.flow === 'start' ? ' on' : ''));
+      v.body.setAttribute('class', 'nd' + (st.flow === 'body' ? ' on' : ''));
+      v.after.setAttribute('class', 'nd' + (st.flow === 'after' ? ' onexit' : ''));
+      v.edges.back.setAttribute('class', 'edge' + (st.flow === 'back' ? ' hot' : ''));
+      v.edges.down.setAttribute('class', 'edge' + (st.flow === 'body' ? ' hot' : ''));
+      v.edges.out.setAttribute('class', 'edge' + (st.flow === 'exit' || st.flow === 'after' ? ' hotexit' : ''));
+      if (st.flow === 'start') v.token.classList.remove('exit');
+    } else if (scene.vis === 'range') {
+      v.tiles.forEach(function (t, i) {
+        t.classList.toggle('on', i < (st.tiles || 0));
+        t.classList.toggle('cur', st.cur === i);
+      });
+      v.excl.style.visibility = st.showExcl ? 'visible' : 'hidden';
+    } else if (scene.vis === 'scan') {
+      v.cells.forEach(function (c, i) {
+        c.classList.toggle('cur', i === st.scanIdx);
+        c.classList.toggle('done', st.scanIdx > i);
+        c.classList.toggle('hit', !!st.hit && i === st.scanIdx);
+      });
+    } else if (scene.vis === 'accum') {
+      v.big.textContent = String(st.bar);
+      v.fill.style.width = (st.bar / v.max * 100) + '%';
+      v.chips.forEach(function (c, i) { c.classList.toggle('on', i < (st.chips || 0)); });
+    } else if (scene.vis === 'grid') {
+      v.cells.forEach(function (c, i) {
+        c.classList.toggle('fill', i < (st.cells || 0));
+        c.classList.toggle('cur', st.curCell === i);
+      });
+    }
+  }
+
+  /* ---------- slide / step navigation ---------- */
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var uis = slides.map(function (s) {
+    var name = s.getAttribute('data-scene');
+    if (!name || !SCENES[name]) return null;
+    return buildScene(s, SCENES[name]);
+  });
+  var stepCount = uis.map(function (ui) { return ui ? ui.scene.steps.length : 1; });
+
+  var current = 0;
+  var step = 0;
+
+  var dotsContainer = document.getElementById('dots');
+  slides.forEach(function () { dotsContainer.appendChild(el('div', 'dot')); });
+  var dots = Array.prototype.slice.call(dotsContainer.querySelectorAll('.dot'));
+
+  var DOT_SIZE = 7;
+  var liquid = el('div');
+  liquid.id = 'liquid';
+  dotsContainer.appendChild(liquid);
+
+  var stepDots = document.getElementById('stepdots');
+  var liquidTimer = null;
+
+  function dotLeft(i) { return dots[i].offsetLeft; }
+
+  function placeLiquid(i, animate) {
+    var targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
+
+    if (!animate || reduceMotion) {
+      liquid.style.transition = 'none';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+      liquid.offsetHeight; // flush the style change before re-enabling transitions
+      liquid.style.transition = '';
+      return;
+    }
+
+    // Phase 1: stretch into a liquid bridge spanning the old and new positions.
+    var fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
+    var bridgeLeft = Math.min(fromLeft, targetLeft);
+    var bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
+
+    liquid.style.transition = 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)';
+    liquid.style.left = bridgeLeft + 'px';
+    liquid.style.width = bridgeWidth + 'px';
+
+    // Phase 2: spring back into a droplet at the new dot.
+    liquidTimer = window.setTimeout(function () {
+      liquidTimer = null;
+      liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+    }, 220);
+  }
+
+  function renderStepDots() {
+    stepDots.innerHTML = '';
+    var n = stepCount[current];
+    if (!uis[current] || n <= 1) return;
+    for (var i = 0; i < n; i++) {
+      var d = el('div', 'sd' + (i <= step ? ' done' : ''));
+      stepDots.appendChild(d);
+    }
+  }
+
+  function renderStep(animate) {
+    var ui = uis[current];
+    if (ui) applyStep(ui, step, animate);
+    renderStepDots();
+  }
+
+  function goSlide(i, backwards) {
+    slides[current].classList.remove('active');
+    current = (i + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    step = backwards ? stepCount[current] - 1 : 0;
+    placeLiquid(current, true);
+    renderStep(false);
+  }
+
+  function next() {
+    if (step < stepCount[current] - 1) {
+      step++;
+      renderStep(true);
+    } else {
+      goSlide(current + 1, false);
+    }
+  }
+
+  function prev() {
+    if (step > 0) {
+      step--;
+      renderStep(true);
+    } else {
+      goSlide(current - 1, true);
+    }
+  }
+
+  placeLiquid(0, false);
+  renderStep(false);
+  window.addEventListener('resize', function () {
+    placeLiquid(current, false);
+    renderStep(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  /* ---------- interactive exercises ---------- */
+
+  document.querySelectorAll('.reveal-btn[data-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (target) target.classList.toggle('show');
+    });
+  });
+
+  document.querySelectorAll('.chip-drag').forEach(function (chip) {
+    chip.addEventListener('dragstart', function (e) {
+      e.dataTransfer.setData('text/plain', chip.getAttribute('data-value'));
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  });
+
+  document.querySelectorAll('.match-call').forEach(function (call) {
+    var slot = call.querySelector('.drop-slot');
+    call.addEventListener('dragover', function (e) { e.preventDefault(); });
+    call.addEventListener('drop', function (e) {
+      e.preventDefault();
+      var value = e.dataTransfer.getData('text/plain');
+      var chip = document.querySelector('.chip-drag[data-value="' + value + '"]');
+      slot.textContent = value;
+      slot.classList.add('filled');
+      if (value === call.getAttribute('data-answer')) {
+        call.classList.remove('wrong');
+        call.classList.add('correct');
+        if (chip) chip.classList.add('used');
+      } else {
+        call.classList.add('wrong');
+        window.setTimeout(function () { call.classList.remove('wrong'); }, 300);
+      }
+    });
+  });
+
+  var matchReset = document.getElementById('match-reset');
+  if (matchReset) {
+    matchReset.addEventListener('click', function () {
+      document.querySelectorAll('.match-call').forEach(function (call) {
+        call.classList.remove('correct', 'wrong');
+        var slot = call.querySelector('.drop-slot');
+        slot.textContent = '';
+        slot.classList.remove('filled');
+      });
+      document.querySelectorAll('.chip-drag').forEach(function (chip) {
+        chip.classList.remove('used');
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
