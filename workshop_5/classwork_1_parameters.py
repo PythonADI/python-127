@@ -4,8 +4,7 @@
 # prints "Hello, <name>!"
 
 def greet(name):
-    # TODO: print a greeting that uses name
-    pass
+    print(f"Hello {name}")
 
 greet("Nina")
 greet("Luka")

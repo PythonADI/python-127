@@ -4,8 +4,7 @@
 # and returns number multiplied by 2.
 
 def double(number):
-    # TODO: return number doubled
-    pass
+    return number * 2
 
 print(double(4))    # should print 8
 print(double(10))   # should print 20

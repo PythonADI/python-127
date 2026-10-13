@@ -1,7 +1,7 @@
 
 herbs = 1000
 
-def make_khinkali(is_kalakuri):
+def make_khinkali(is_kalakuri = False):
     global herbs
 
     print("Prepare Dough")
@@ -13,8 +13,8 @@ def make_khinkali(is_kalakuri):
     print("Wrap")
     
 
-for i in range(50):
-    make_khinkali(True)
-    make_khinkali(False)
+# for i in range(50):
+make_khinkali()
+make_khinkali(False)
 
 

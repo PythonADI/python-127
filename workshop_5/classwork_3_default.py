@@ -6,8 +6,7 @@
 # power.
 
 def power(base, exponent=2):
-    # TODO: return base raised to exponent (hint: **)
-    pass
+    return base ** exponent
 
 print(power(3))      # should print 9  (3 squared)
 print(power(2, 5))   # should print 32 (2 to the 5th)
