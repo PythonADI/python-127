@@ -1,4 +1,4 @@
-names = ["Nia", "Marry", "George", "Nick"]
+names = ["Nia", "Marry", "George", "Nick", "George"]
 x = "George"
 
 
