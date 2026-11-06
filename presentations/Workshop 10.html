@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 10 — Virtual Environments and uv</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-soft-2: rgba(0, 113, 227, 0.07);
+    --warn: #c2410c;
+    --ok: #1d7a3e;
+    --console-bg: #1d1d1f;
+    --console-text: #f5f5f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 9vw;
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  p.body {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+  p.body b { font-weight: 600; }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2em 2.2em;
+    width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: inherit;
+    line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+  code { font-variant-ligatures: none; }
+
+  table { border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td code { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+  #dots {
+    position: fixed;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    height: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--divider); }
+  #liquid {
+    position: absolute;
+    top: 0;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  #stepdots {
+    position: fixed;
+    bottom: 6.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    height: 4px;
+  }
+  #stepdots .sd { width: 4px; height: 4px; border-radius: 50%; background: var(--divider); }
+  #stepdots .sd.done { background: var(--accent); }
+
+  /* ---------- interactive exercises ---------- */
+  .exercise pre.ex-code { margin-top: 1vh; }
+  .reveal-btn {
+    margin-top: 2.4vh;
+    align-self: flex-start;
+    font: inherit;
+    font-size: clamp(15px, 1.3vw, 19px);
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 999px;
+    padding: 0.6em 1.5em;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .reveal-btn:hover { transform: translateY(-1px); }
+  .reveal-btn:active { transform: translateY(0); }
+
+  .ex-answer {
+    margin-top: 0;
+    max-width: 60ch;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+  }
+  .ex-answer.show { opacity: 1; max-height: 20em; margin-top: 2vh; }
+  .ex-answer-line {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(18px, 1.8vw, 26px);
+    font-weight: 600;
+    color: var(--ok);
+    margin-bottom: 0.25em;
+  }
+  .ex-explain {
+    color: var(--text-secondary);
+    font-size: clamp(15px, 1.3vw, 19px);
+    line-height: 1.5;
+    max-width: 55ch;
+    margin-top: 0.6em;
+  }
+
+  .exercise .lead {
+    font-size: clamp(16px, 1.4vw, 21px);
+    color: var(--text-secondary);
+    margin-bottom: 2vh;
+  }
+  table.tight th, table.tight td { padding-top: 8px; padding-bottom: 8px; }
+
+  /* ---------- wide slides: heading on top, windows underneath ---------- */
+  .slide.wide { padding: 6vh 6vw 10vh; }
+  .wide h2 { font-size: clamp(26px, 2.6vw, 40px); margin-bottom: 10px; }
+  .wide p.body { max-width: 70ch; font-size: clamp(16px, 1.4vw, 21px); margin-bottom: 3vh; }
+  .cols { display: grid; gap: 1.8vw; align-items: start; }
+  .cols.c2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cols.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stack { display: flex; flex-direction: column; gap: 1.6vh; min-width: 0; }
+  .step {
+    font-size: clamp(12px, 1vw, 15px);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .verdict { margin-top: 2.4vh; font-size: clamp(16px, 1.4vw, 21px); font-weight: 600; }
+  .verdict .ok { color: var(--ok); }
+  .verdict .no { color: var(--warn); }
+
+  /* ---------- windows: explorer, terminal, editor ---------- */
+  .win {
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.02vw, 16px);
+    font-variant-ligatures: none;
+    min-width: 0;
+  }
+  .win .bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #f3f3f3;
+    border-bottom: 1px solid var(--divider);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.78em;
+    color: var(--text-secondary);
+  }
+  .win .bar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; flex: none; }
+  .win .bar i + i { background: #febc2e; }
+  .win .bar i + i + i { background: #28c840; }
+  .win .bar span { margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* explorer */
+  .xbody { padding: 0.45em 0; line-height: 1.7; }
+  .xr {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0 0.9em 0 calc(0.7em + var(--d) * 1.15em);
+    white-space: nowrap;
+  }
+  .xr .chev { width: 0.8em; flex: none; color: #8e8e93; text-align: center; }
+  .xr .chev.open { transform: rotate(90deg); }
+  .xr svg { width: 1.05em; height: 1.05em; flex: none; }
+  .xr .nm { overflow: hidden; text-overflow: ellipsis; }
+  .xr.dim .nm, .xr.dim svg { opacity: 0.45; }
+  .xr.hl { background: var(--accent-soft); }
+  .xr .note {
+    margin-left: auto;
+    padding-left: 1.2em;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.86em;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .xr .tag {
+    margin-left: auto;
+    padding: 0 0.55em;
+    border-radius: 999px;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.72em;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .xr .note + .tag { margin-left: 0.6em; }
+  .xr .tag.new { color: var(--ok); background: rgba(29, 122, 62, 0.1); }
+  .xr .tag.changed { color: #a16207; background: rgba(202, 138, 4, 0.13); }
+  .xr .tag.gone { color: var(--warn); background: rgba(194, 65, 12, 0.1); }
+
+  /* terminal */
+  .win.term { background: #1e1e1e; border-color: #2d2d2d; }
+  .win.term .bar { background: #2d2d2d; border-color: #2d2d2d; color: #a0a0a0; }
+  .tbody {
+    padding: 0.8em 1em;
+    color: #c8c8c8;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .tbody .pr { color: #4ec9b0; }
+  .tbody .pr b { color: #c586c0; font-weight: 400; }
+  .tbody .cmd { color: #fff; }
+  .tbody .add { color: #7ee787; }
+  .tbody .err { color: #ff8a65; }
+  .tbody .cm { color: #6a9955; }
+  .tbody .ask { color: #febc2e; font-weight: 700; }
+
+  /* editor */
+  .ebody { display: grid; grid-template-columns: auto 1fr; padding: 0.5em 0; line-height: 1.6; }
+  .ebody .ln { padding: 0 0.9em 0 1em; color: #b0b0b5; text-align: right; user-select: none; }
+  .ebody .tx { padding-right: 1em; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ebody .ln.add, .ebody .tx.add { background: rgba(29, 122, 62, 0.1); }
+  .ebody .ln.hl, .ebody .tx.hl { background: var(--accent-soft); }
+  .ebody .tx.more { color: #b0b0b5; }
+  .eline { display: contents; }
+  /* Numbered by a counter so an inserted line renumbers the ones below it. */
+  .ebody { counter-reset: ln; }
+  .ebody .ln { counter-increment: ln; }
+  .ebody .ln::before { content: counter(ln); }
+  .eline.add > span { background: rgba(29, 122, 62, 0.1); }
+  .eline.hl > span { background: var(--accent-soft); transition: background 0.3s ease; }
+  .tline { min-height: 1.55em; }
+
+  /* ---------- step animations ---------- */
+  /* Anything with data-step stays invisible (but keeps its space, so the
+     slide never jumps) until its step is reached. */
+  [data-step]:not(.shown) { visibility: hidden; }
+  /* Explorer rows and editor lines are inserted instead, like a real
+     explorer, so there are no gaps waiting for them. */
+  .xr[data-step]:not(.shown), .eline[data-step]:not(.shown) { display: none; }
+  /* Windows grow downwards as steps play, so pin these slides to the top
+     instead of centring them — otherwise the heading would jump. */
+  .slide.wide { justify-content: flex-start; padding-top: 10vh; }
+  code.inline { white-space: nowrap; }
+  .pop { animation: pop 0.35s ease both; }
+  .eline.pop > span { animation: pop 0.35s ease both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .xr.pop { animation: rowin 0.9s ease both; }
+  @keyframes rowin {
+    0% { opacity: 0; transform: translateX(-10px); background: rgba(29, 122, 62, 0.2); }
+    30% { opacity: 1; transform: none; background: rgba(29, 122, 62, 0.2); }
+    100% { background: transparent; }
+  }
+  .xr { transition: background 0.3s ease; }
+  .xr .nm { transition: color 0.3s ease; }
+  .xr.gone .nm { color: var(--warn); text-decoration: line-through; }
+  .xr.gone svg { opacity: 0.35; }
+  .tbody .cmd.typing::after {
+    content: '';
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    background: #fff;
+  }
+  .hint {
+    position: fixed;
+    right: 2.2vw;
+    bottom: 3vh;
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .hint.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .pop, .xr.pop, .eline.pop > span { animation: none; }
+    .xr, .xr .nm { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-folder" viewBox="0 0 16 16"><path fill="#dcb67a" d="M1.5 3h4.2l1.5 1.6h7.3v8.9h-13z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path fill="currentColor" d="M3.5 1.5h5.8l3.2 3.2v9.8h-9z"/><path fill="#fff" opacity=".55" d="M9.3 1.5v3.2h3.2z"/></symbol>
+</svg>
+
+<!--
+  How the windows work: each .win holds plain text that the script turns into
+  an explorer, terminal or editor. "@2 " in front of a terminal/editor line, or
+  "@2" inside an explorer row's [flags], makes it appear on step 2 (press → to
+  step). "hl@2", "gone@2", "new@2", "changed@2" switch that effect on at step 2.
+  Any other element can take data-step="2".
+-->
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 10</div>
+  <h1>Virtual Environments<br>and uv</h1>
+</section>
+
+<section class="slide wide">
+  <h2>1. The problem</h2>
+  <p class="body">Without a virtual environment, <code class="inline">pip install</code> puts every package into the <b>one Python on your computer</b>. Every project shares that one folder.</p>
+  <div class="cols c2">
+    <div class="win explorer" data-title="C:\Users\nino\AppData\Local\Programs">
+Python311/
+  python.exe
+  Lib/
+    site-packages/ [hl@2] # shared by every project
+      django/ [closed]
+      django-5.2.18.dist-info/ [closed]
+      pip/ [closed]
+    </div>
+    <div class="win explorer" data-title="C:\Users\nino\projects" data-step="1">
+projects/
+  old_shop/ # needs Django 4.2
+    shop/ [closed]
+    manage.py
+  new_blog/ # needs Django 5.2
+    blog/ [closed]
+    manage.py
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>Install Django 4.2 for old_shop&hellip;</h2>
+  <p class="body">There is room for only <b>one</b> Django, so pip throws the other one away. Watch <code class="inline">site-packages</code>:</p>
+  <div class="cols c2">
+    <div class="win term" data-cwd="~/projects/old_shop">
+@1 $ pip install "django==4.2.*"
+@1 Installing collected packages: django
+@1   Attempting uninstall: django
+@1     Found existing installation: Django 5.2.18
+@1     Uninstalling Django-5.2.18:
+@1 !       Successfully uninstalled Django-5.2.18
+@2 Successfully installed django-4.2.30
+    </div>
+    <div class="win explorer" data-title="C:\Users\nino\AppData\Local\Programs">
+Python311/
+  Lib/
+    site-packages/
+      django/ [closed gone@1]
+      django-5.2.18.dist-info/ [closed gone@1]
+      django/ [closed new @2]
+      django-4.2.30.dist-info/ [closed new @2]
+      pip/ [closed]
+    </div>
+  </div>
+  <p class="verdict" data-step="3"><span class="ok">✓ old_shop works.</span>&nbsp;&nbsp;<span class="no">✗ new_blog just lost Django 5.2. It is broken.</span></p>
+</section>
+
+<section class="slide wide">
+  <h2>2. One backpack per project</h2>
+  <p class="body">Each project gets its own <code class="inline">.venv</code> folder with <b>its own</b> packages: a <b>virtual environment</b>. Two Djangos, two folders, no fight.</p>
+  <div class="cols c2">
+    <div class="win explorer" data-title="old_shop">
+old_shop/
+  .venv/ [new @1]
+    Lib/ [@1]
+      site-packages/ [@1]
+        django/ [closed @1]
+        django-4.2.30.dist-info/ [closed @1 hl@3] # Django 4.2
+  shop/ [closed]
+  manage.py
+  pyproject.toml
+    </div>
+    <div class="win explorer" data-title="new_blog">
+new_blog/
+  .venv/ [new @2]
+    Lib/ [@2]
+      site-packages/ [@2]
+        django/ [closed @2]
+        django-5.2.18.dist-info/ [closed @2 hl@3] # Django 5.2
+  blog/ [closed]
+  manage.py
+  pyproject.toml
+    </div>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>It's just a folder</h2>
+    <p class="body">Open <code class="inline">.venv</code> and you find a <b>Python</b> and the <b>packages</b>. For one <code class="inline">uv add django</code> that's already <b>4,371 files (34 MB)</b>.</p>
+    <p class="body" style="margin-top:2vh;color:var(--text-secondary)">On macOS / Linux, <code class="inline">Scripts/</code> is called <code class="inline">bin/</code>.</p>
+  </div>
+  <div class="visual-col">
+    <div class="win explorer" data-title="new_blog" style="width:100%">
+new_blog/
+  .venv/
+    Lib/
+      site-packages/
+        asgiref/ [closed]
+        django/ [closed hl@2] # Django itself
+        sqlparse/ [closed]
+        tzdata/ [closed]
+    Scripts/
+      activate
+      django-admin.exe
+      python.exe [hl@1] # this project's Python
+    pyvenv.cfg
+  main.py
+  pyproject.toml
+    </div>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>3. uv: one tool for all of it</h2>
+    <p class="body">uv makes the <code class="inline">.venv</code>, fills it, and runs your code with it. Five commands.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>uv init</code></td><td>Start a new project</td></tr>
+      <tr><td><code>uv add django</code></td><td>Put a package in <code>.venv</code></td></tr>
+      <tr><td><code>uv remove django</code></td><td>Take a package out</td></tr>
+      <tr><td><code>uv run python main.py</code></td><td>Run with <code>.venv</code></td></tr>
+      <tr><td><code>uv sync</code></td><td>Rebuild <code>.venv</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2><code>uv init</code>: start a project</h2>
+  <p class="body">You get a folder with a few files. <b>No <code class="inline">.venv</code> yet</b>: it appears the first time you need it.</p>
+  <div class="cols c2">
+    <div class="win term" data-cwd="~/projects">
+@1 $ uv init new_blog
+@1 Initialized project `new-blog` at `C:\Users\nino\projects\new_blog`
+@2 $ cd new_blog
+@2 $
+    </div>
+    <div class="win explorer" data-title="projects">
+projects/
+  new_blog/ [new @1]
+    .gitignore [@1]
+    .python-version [@1 hl@2] # which Python
+    main.py [@1]
+    pyproject.toml [@1 hl@2] # settings + package list
+    README.md [@1]
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2><code>uv add django</code>: install a package</h2>
+  <p class="body">uv creates <code class="inline">.venv</code>, downloads Django and the small packages it needs <b>into it</b>, and writes Django down.</p>
+  <div class="cols c3">
+    <div class="win term" data-cwd="~/projects/new_blog">
+@1 $ uv add django
+@1 Creating virtual environment at: .venv
+@2 Resolved 6 packages in 281ms
+@2 Installed 4 packages in 1.74s
+@2  + asgiref==3.13.0
+@2  + django==5.2.18
+@2  + sqlparse==0.6.1
+@2  + tzdata==2026.6
+    </div>
+    <div class="win editor" data-file="pyproject.toml">
+[project]
+name = "new-blog"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+@3 +     "django>=5.2.18",
+]
+    </div>
+    <div class="win explorer" data-title="new_blog">
+new_blog/
+  .venv/ [dim new @1]
+    Lib/ [dim @1]
+      site-packages/ [dim @2]
+        django/ [closed dim @2]
+    Scripts/ [closed dim @1]
+  .gitignore
+  .python-version
+  main.py
+  pyproject.toml [changed@3]
+  README.md
+  uv.lock [new @3]
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2><code>uv run</code>: run with the project's <code>.venv</code></h2>
+  <p class="body"><code class="inline">uv run python</code> uses <b>new_blog/.venv</b>. Plain <code class="inline">python</code> uses the <b>computer's</b> Python, where Django was never installed.</p>
+  <div class="win term" data-cwd="~/projects/new_blog">
+@1 $ uv run python -c "import django; print(django.__version__)"
+@1 5.2.18
+@2 $ python -c "import django"
+@2 Traceback (most recent call last):
+@2   File "&lt;string&gt;", line 1, in &lt;module&gt;
+@2 ! ModuleNotFoundError: No module named 'django'
+  </div>
+</section>
+
+<section class="slide exercise">
+  <h2>Try it &mdash; predict the output</h2>
+  <p class="lead"><code class="inline">old_shop</code> ran <code class="inline">uv add "django==4.2.*"</code>. <code class="inline">new_blog</code> ran <code class="inline">uv add django</code>. What prints at each <b>?</b></p>
+  <div class="win term" data-cwd="~/projects" style="max-width:52em">
+$ cd old_shop
+$ uv run python -c "import django; print(django.__version__)"
+?
+$ cd ../new_blog
+$ uv run python -c "import django; print(django.__version__)"
+?
+  </div>
+  <button class="reveal-btn" data-target="ex1-answer">Reveal answer</button>
+  <div class="ex-answer" id="ex1-answer">
+    <div class="ex-answer-line">&rarr; <code>4.2.30</code><br>&rarr; <code>5.2.18</code></div>
+    <p class="ex-explain">Same command, different folder, different <code class="inline">.venv</code>. Both versions live on one computer and neither project breaks.</p>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>4. Three things in your project</h2>
+  <p class="body">A <b>shopping list</b>, a <b>receipt</b>, and the <b>shopping bag</b> itself.</p>
+  <div class="cols c2">
+    <div class="win explorer" data-title="new_blog">
+new_blog/
+  .venv/ [closed dim hl@3] # bag: the packages
+  .gitignore
+  .python-version
+  main.py
+  pyproject.toml [hl@1] # list: "Django, 5.2 or newer"
+  README.md
+  uv.lock [hl@2] # receipt: exact versions
+    </div>
+    <div class="win editor" data-file="uv.lock (shortened)" data-step="2">
+[[package]]
+name = "django"
+version = "5.2.18"
+dependencies = [
+    { name = "asgiref" },
+    { name = "sqlparse" },
+    { name = "tzdata" },
+]
+...
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>Never commit <code>.venv</code></h2>
+  <p class="body">It's <b>huge</b> (4,371 files), and it only works on <b>your</b> computer: a Windows <code class="inline">.venv</code> doesn't work on a Mac. <code class="inline">uv init</code> already hides it from Git.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file=".gitignore">
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv [hl@1]
+    </div>
+    <div class="win term" data-cwd="~/projects/new_blog">
+@2 $ git status
+@2 Untracked files:
+@2   (use "git add &lt;file&gt;..." to include in what will be committed)
+@2         .gitignore
+@2         .python-version
+@2         README.md
+@2         main.py
+@2         pyproject.toml
+@2         uv.lock
+@3 # no .venv in the list
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>5. Sharing a project</h2>
+  <p class="body">Your friend gets the list and the receipt, but no <code class="inline">.venv</code>. One command builds <b>exactly the same</b> one.</p>
+  <div class="cols c3">
+    <div class="stack">
+      <div class="step">1 &middot; your laptop</div>
+      <div class="win explorer" data-title="new_blog">
+new_blog/
+  .venv/ [closed dim] # stays here
+  .gitignore
+  main.py
+  pyproject.toml
+  uv.lock
+      </div>
+    </div>
+    <div class="stack" data-step="1">
+      <div class="step">2 &middot; on GitHub</div>
+      <div class="win explorer" data-title="github.com/nino/new_blog">
+new_blog/ # no .venv
+  .gitignore
+  main.py
+  pyproject.toml
+  uv.lock
+      </div>
+    </div>
+    <div class="stack" data-step="2">
+      <div class="step">3 &middot; friend's laptop</div>
+      <div class="win term" data-cwd="~/projects">
+@2 $ git clone https://github.com/nino/new_blog
+@2 $ cd new_blog
+@3 $ uv sync
+@3 Creating virtual environment at: .venv
+@3 Resolved 6 packages in 1ms
+@3 Installed 4 packages in 1.51s
+@3  + asgiref==3.13.0
+@3  + django==5.2.18
+@3  + sqlparse==0.6.1
+@3  + tzdata==2026.6
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide exercise">
+  <h2>Try it &mdash; what goes into Git?</h2>
+  <p class="lead">This is your Homework 9 folder. Which of these do you commit?</p>
+  <div class="win explorer" data-title="submissions/nino" style="max-width:26em">
+nino/
+  .venv/ [closed]
+  my_site/
+    settings.py
+    urls.py
+  pages/ [closed]
+  templates/ [closed]
+  manage.py
+  pyproject.toml
+  uv.lock
+  </div>
+  <button class="reveal-btn" data-target="ex2-answer">Reveal answer</button>
+  <div class="ex-answer" id="ex2-answer">
+    <div class="ex-answer-line">&rarr; everything <b>except</b> <code>.venv/</code></div>
+    <p class="ex-explain">Your code, the list and the receipt go in. Your teacher rebuilds <code class="inline">.venv</code> with <code class="inline">uv sync</code>.</p>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>6. The old way</h2>
+    <p class="body">Before uv: <code class="inline">venv</code> + <code class="inline">pip</code>. You'll see it in tutorials. <b>Activate</b> means &ldquo;from now on, <code class="inline">python</code> is the <code class="inline">.venv</code> one&rdquo;: watch <code class="inline">(.venv)</code> appear in the prompt.</p>
+    <p class="body" style="margin-top:2vh;color:var(--text-secondary)">PowerShell: <code class="inline">.venv\Scripts\activate</code><br>macOS / Linux: <code class="inline">source .venv/bin/activate</code></p>
+  </div>
+  <div class="visual-col">
+    <div class="win term" data-cwd="~/projects/new_blog" style="width:100%">
+@1 $ python -m venv .venv
+@2 $ source .venv/Scripts/activate
+@3 $ pip install django
+@3 Successfully installed asgiref-3.13.0 django-5.2.18 sqlparse-0.6.1 tzdata-2026.6
+@4 $ pip freeze > requirements.txt
+@5 $ deactivate
+@5 $
+    </div>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Old way vs uv</h2>
+    <p class="body">Same jobs. uv is faster and you cannot forget a step.</p>
+  </div>
+  <div class="visual-col">
+    <table class="tight">
+      <tr><th>Job</th><th>Old way</th><th>uv</th></tr>
+      <tr><td>Create</td><td><code>python -m venv .venv</code></td><td>automatic</td></tr>
+      <tr><td>Use</td><td>activate, then <code>python</code></td><td><code>uv run python</code></td></tr>
+      <tr><td>Install</td><td><code>pip install django</code></td><td><code>uv add django</code></td></tr>
+      <tr><td>Write down</td><td><code>pip freeze &gt; requirements.txt</code></td><td>automatic</td></tr>
+      <tr><td>Rebuild</td><td><code>pip install -r requirements.txt</code></td><td><code>uv sync</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>7. Common mistakes</h2>
+    <p class="body">Almost every problem is &ldquo;wrong Python&rdquo; or &ldquo;wrong folder&rdquo;.</p>
+  </div>
+  <div class="visual-col">
+    <table class="tight">
+      <tr><th>You see</th><th>Fix</th></tr>
+      <tr><td><code>No module named 'django'</code></td><td>Use <code>uv run python</code></td></tr>
+      <tr><td><code>No `pyproject.toml` found</code></td><td><code>cd</code> into the project</td></tr>
+      <tr><td>VS Code: red <code>import django</code></td><td>Select Interpreter &rarr; <code>.venv</code></td></tr>
+      <tr><td>Commit has thousands of files</td><td>Add <code>.venv</code> to <code>.gitignore</code></td></tr>
+      <tr><td>Deleted <code>.venv</code></td><td><code>uv sync</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Quick reference</h2>
+    <p class="body">Virtual environments in eight lines.</p>
+  </div>
+  <div class="visual-col">
+    <table class="tight">
+      <tr><th>Idea</th><th>Example</th></tr>
+      <tr><td>New project</td><td><code>uv init my_project</code></td></tr>
+      <tr><td>Install</td><td><code>uv add django</code></td></tr>
+      <tr><td>Exact version</td><td><code>uv add "django==4.2.*"</code></td></tr>
+      <tr><td>Uninstall</td><td><code>uv remove django</code></td></tr>
+      <tr><td>Run</td><td><code>uv run python main.py</code></td></tr>
+      <tr><td>Rebuild</td><td><code>uv sync</code></td></tr>
+      <tr><td>Commit</td><td><code>pyproject.toml</code>, <code>uv.lock</code></td></tr>
+      <tr><td>Never commit</td><td><code>.venv/</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Try it yourself</h2>
+    <p class="body">Type this in your own terminal. Check the versions, then delete one <code class="inline">.venv</code> and bring it back.</p>
+  </div>
+  <div class="visual-col">
+    <div class="win term" data-cwd="~/projects" style="width:100%">
+$ uv init old_shop
+$ cd old_shop
+$ uv add "django==4.2.*"
+$ uv run python -c "import django; print(django.__version__)"
+$ cd ..
+$ uv init new_blog
+$ cd new_blog
+$ uv add django
+$ uv run python -c "import django; print(django.__version__)"
+$ rm -rf .venv
+$ uv sync
+    </div>
+  </div>
+</section>
+
+<div id="stepdots"></div>
+<div id="dots"></div>
+<div class="hint" id="hint">press → to play the next step</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  /* ============================================================
+     WINDOWS — each .win holds plain text that is turned into an
+     explorer, terminal or editor when the page loads.
+     ============================================================ */
+
+  function lines(node) {
+    var all = node.textContent.split('\n');
+    while (all.length && !all[0].trim()) all.shift();
+    while (all.length && !all[all.length - 1].trim()) all.pop();
+    return all;
+  }
+
+  // "@2 rest" → [2, "rest"]; a line without a marker belongs to step 0.
+  function stepOf(raw) {
+    var m = raw.match(/^@(\d+) /);
+    return m ? [Number(m[1]), raw.slice(m[0].length)] : [0, raw];
+  }
+
+  // Effects that switch on at a later step are stored as "cls@step cls@step".
+  function addLater(node, cls, step) {
+    var list = node.getAttribute('data-on');
+    node.setAttribute('data-on', (list ? list + ' ' : '') + cls + '@' + step);
+  }
+
+  function bar(title) {
+    var b = el('div', 'bar');
+    b.appendChild(el('i'));
+    b.appendChild(el('i'));
+    b.appendChild(el('i'));
+    b.appendChild(el('span', '', title));
+    return b;
+  }
+
+  var FILE_COLORS = {
+    py: '#3572a5', toml: '#9c4221', lock: '#8e8e93', md: '#519aba', exe: '#6e6e73',
+    cfg: '#8e8e93', html: '#e44d26', gitignore: '#f05133', txt: '#8e8e93'
+  };
+
+  function icon(id, color) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + id);
+    svg.appendChild(use);
+    if (color) svg.style.color = color;
+    return svg;
+  }
+
+  // One line per entry: two spaces of indent per level, a trailing "/" for a
+  // folder, optional [flags], optional "# note". Flags: closed dim hl new
+  // changed gone, "@2" (row appears on step 2), "hl@2" (effect from step 2).
+  function buildExplorer(win) {
+    var body = el('div', 'xbody');
+    lines(win).forEach(function (raw) {
+      var note = '';
+      var hash = raw.indexOf(' # ');
+      if (hash >= 0) { note = raw.slice(hash + 3).trim(); raw = raw.slice(0, hash); }
+      var flags = [];
+      raw = raw.replace(/\[([^\]]*)\]/, function (_, f) { flags = f.trim().split(/\s+/); return ''; });
+      var depth = raw.match(/^ */)[0].length / 2;
+      var name = raw.trim();
+      var isDir = name.charAt(name.length - 1) === '/';
+      if (isDir) name = name.slice(0, -1);
+      var has = function (f) { return flags.indexOf(f) >= 0; };
+
+      var row = el('div', 'xr' + (has('dim') ? ' dim' : '') + (has('hl') ? ' hl' : ''));
+      row.style.setProperty('--d', depth);
+      row.appendChild(el('span', 'chev' + (isDir && !has('closed') ? ' open' : ''), isDir ? '›' : ''));
+      var ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.') + 1) : '';
+      row.appendChild(isDir ? icon('i-folder') : icon('i-file', FILE_COLORS[ext] || '#8e8e93'));
+      row.appendChild(el('span', 'nm', name));
+
+      var noteStep = null;
+      flags.forEach(function (f) {
+        var m = f.match(/^(\w*)@(\d+)$/);
+        if (!m) return;
+        var step = Number(m[2]);
+        if (!m[1]) row.setAttribute('data-step', step);
+        else if (m[1] === 'hl' || m[1] === 'gone') {
+          addLater(row, m[1], step);
+          if (m[1] === 'hl') noteStep = step;
+        }
+      });
+
+      if (note) {
+        var n = el('span', 'note', note);
+        if (noteStep !== null) n.setAttribute('data-step', noteStep);
+        row.appendChild(n);
+      }
+      ['new', 'changed', 'gone'].forEach(function (t) {
+        var later = flags.filter(function (f) { return f.indexOf(t + '@') === 0; })[0];
+        if (!has(t) && !later) return;
+        var tag = el('span', 'tag ' + t, t);
+        if (later) tag.setAttribute('data-step', later.split('@')[1]);
+        row.appendChild(tag);
+      });
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  // "$ cmd" is typed at the prompt (cd updates the prompt's folder, activate
+  // adds "(.venv)"), "! line" is an error, "# line" is a comment, " + pkg"
+  // is an install line; everything else is plain output.
+  function buildTerminal(win) {
+    var body = el('div', 'tbody');
+    var cwd = win.getAttribute('data-cwd') || '~';
+    var venv = false;
+    lines(win).forEach(function (line) {
+      var parsed = stepOf(line);
+      var raw = parsed[1];
+      var row = el('div', 'tline');
+      if (parsed[0]) row.setAttribute('data-step', parsed[0]);
+      if (raw.charAt(0) === '$') {
+        var cmd = raw.slice(2);
+        var pr = el('span', 'pr');
+        if (venv) pr.appendChild(el('b', '', '(.venv) '));
+        pr.appendChild(document.createTextNode(cwd + ' $ '));
+        row.appendChild(pr);
+        if (cmd) row.appendChild(el('span', 'cmd', cmd));
+        var cd = cmd.match(/^cd (.+)$/);
+        if (cd) {
+          cd[1].split('/').forEach(function (part) {
+            if (part === '..') cwd = cwd.slice(0, cwd.lastIndexOf('/'));
+            else cwd += '/' + part;
+          });
+        }
+        if (/activate$/.test(cmd)) venv = true;
+        if (cmd === 'deactivate') venv = false;
+      } else if (raw.charAt(0) === '!') {
+        row.appendChild(el('span', 'err', raw.slice(2)));
+      } else if (raw.charAt(0) === '#') {
+        row.appendChild(el('span', 'cm', raw));
+      } else if (raw === '?') {
+        row.appendChild(el('span', 'ask', '?'));
+      } else if (/^ \+ /.test(raw)) {
+        row.appendChild(el('span', 'add', raw));
+      } else {
+        row.textContent = raw;
+      }
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  // "+ line" is newly added, "..." means "more below", a trailing
+  // "[hl@2]" highlights the line from step 2.
+  function buildEditor(win) {
+    var body = el('div', 'ebody');
+    lines(win).forEach(function (line) {
+      var parsed = stepOf(line);
+      var raw = parsed[1];
+      var row = el('div', 'eline');
+      if (parsed[0]) row.setAttribute('data-step', parsed[0]);
+      raw = raw.replace(/ \[hl@(\d+)\]$/, function (_, s) { addLater(row, 'hl', Number(s)); return ''; });
+      if (/^\+ /.test(raw)) { row.classList.add('add'); raw = raw.slice(2); }
+      var tx = el('span', 'tx', raw);
+      if (raw.trim() === '...') tx.classList.add('more');
+      row.appendChild(el('span', 'ln'));
+      row.appendChild(tx);
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  document.querySelectorAll('.win').forEach(function (win) {
+    var body, title;
+    if (win.classList.contains('explorer')) { body = buildExplorer(win); title = win.getAttribute('data-title'); }
+    else if (win.classList.contains('term')) { body = buildTerminal(win); title = 'Terminal'; }
+    else { body = buildEditor(win); title = win.getAttribute('data-file'); }
+    win.textContent = '';
+    win.appendChild(bar(title));
+    win.appendChild(body);
+  });
+
+  /* ============================================================
+     STEPS — on each step, everything marked for that step plays in
+     page order: commands type themselves, then their output and the
+     explorer/editor changes follow one after another.
+     ============================================================ */
+
+  function effectsOf(slide) {
+    var list = [];
+    slide.querySelectorAll('[data-step], [data-on]').forEach(function (node) {
+      if (node.hasAttribute('data-step')) {
+        list.push({ node: node, step: Number(node.getAttribute('data-step')), cls: null });
+      }
+      (node.getAttribute('data-on') || '').split(' ').filter(Boolean).forEach(function (pair) {
+        var p = pair.split('@');
+        list.push({ node: node, step: Number(p[1]), cls: p[0] });
+      });
+    });
+    return list;
+  }
+
+  var timers = [];
+  var typing = [];
+
+  function cancelTimers() {
+    timers.forEach(window.clearTimeout);
+    timers = [];
+    typing.forEach(function (cmd) { cmd.textContent = cmd.getAttribute('data-full'); cmd.classList.remove('typing'); });
+    typing = [];
+  }
+
+  function later(ms, fn) { timers.push(window.setTimeout(fn, ms)); }
+
+  function typeCommand(cmd) {
+    var full = cmd.getAttribute('data-full') || cmd.textContent;
+    cmd.setAttribute('data-full', full);
+    var per = Math.min(32, 700 / full.length);
+    cmd.textContent = '';
+    cmd.classList.add('typing');
+    typing.push(cmd);
+    for (var i = 1; i <= full.length; i++) {
+      (function (n) {
+        later(n * per, function () {
+          cmd.textContent = full.slice(0, n);
+          if (n === full.length) {
+            cmd.classList.remove('typing');
+            typing.splice(typing.indexOf(cmd), 1);
+          }
+        });
+      })(i);
+    }
+    return full.length * per;
+  }
+
+  function setEffect(e, on) {
+    if (e.cls) e.node.classList.toggle(e.cls, on);
+    else {
+      e.node.classList.toggle('shown', on);
+      if (!on) e.node.classList.remove('pop');
+    }
+  }
+
+  function playEffect(e) {
+    setEffect(e, true);
+    if (!e.cls) {
+      e.node.classList.remove('pop');
+      void e.node.offsetWidth; // restart the animation
+      e.node.classList.add('pop');
+    }
+  }
+
+  function applyStep(slide, effects, step, animate) {
+    cancelTimers();
+    effects.forEach(function (e) {
+      var on = e.step <= step;
+      if (!(animate && e.step === step)) setEffect(e, on);
+      else if (!e.cls) setEffect(e, false);
+    });
+    if (!animate) return;
+
+    var t = 0;
+    effects.forEach(function (e) {
+      if (e.step !== step || !e.step) return;
+      var cmd = !e.cls && e.node.classList.contains('tline') ? e.node.querySelector('.cmd') : null;
+      later(t, function () {
+        if (cmd && !reduceMotion) typeCommand(cmd);
+        playEffect(e);
+      });
+      if (cmd && !reduceMotion) {
+        var full = cmd.getAttribute('data-full') || cmd.textContent;
+        t += full.length * Math.min(32, 700 / full.length) + 250;
+      } else {
+        t += reduceMotion ? 0 : 110;
+      }
+    });
+  }
+
+  /* ---------- slide / step navigation ---------- */
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var effects = slides.map(effectsOf);
+  var stepCount = effects.map(function (list) {
+    return list.reduce(function (m, e) { return Math.max(m, e.step); }, 0) + 1;
+  });
+
+  var current = 0;
+  var step = 0;
+
+  var dotsContainer = document.getElementById('dots');
+  slides.forEach(function () { dotsContainer.appendChild(el('div', 'dot')); });
+  var dots = Array.prototype.slice.call(dotsContainer.querySelectorAll('.dot'));
+
+  var DOT_SIZE = 7;
+  var liquid = el('div');
+  liquid.id = 'liquid';
+  dotsContainer.appendChild(liquid);
+  var liquidTimer = null;
+  var stepDots = document.getElementById('stepdots');
+  var hint = document.getElementById('hint');
+
+  function dotLeft(i) { return dots[i].offsetLeft; }
+
+  function placeLiquid(i, animate) {
+    var targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
+
+    if (!animate || reduceMotion) {
+      liquid.style.transition = 'none';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+      liquid.offsetHeight; // flush the style change before re-enabling transitions
+      liquid.style.transition = '';
+      return;
+    }
+
+    // Phase 1: stretch into a liquid bridge spanning the old and new positions.
+    var fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
+    var bridgeLeft = Math.min(fromLeft, targetLeft);
+    var bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
+
+    liquid.style.transition = 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)';
+    liquid.style.left = bridgeLeft + 'px';
+    liquid.style.width = bridgeWidth + 'px';
+
+    // Phase 2: spring back into a droplet at the new dot.
+    liquidTimer = window.setTimeout(function () {
+      liquidTimer = null;
+      liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+    }, 220);
+  }
+
+  function renderStepDots() {
+    stepDots.innerHTML = '';
+    var n = stepCount[current];
+    hint.classList.toggle('on', n > 1 && step < n - 1);
+    if (n <= 1) return;
+    for (var i = 0; i < n; i++) stepDots.appendChild(el('div', 'sd' + (i <= step ? ' done' : '')));
+  }
+
+  function renderStep(animate) {
+    applyStep(slides[current], effects[current], step, animate);
+    renderStepDots();
+  }
+
+  function goSlide(i, backwards) {
+    slides[current].classList.remove('active');
+    var next = (i + slides.length) % slides.length;
+    slides[next].classList.add('active');
+    placeLiquid(next, true);
+    current = next;
+    step = backwards ? stepCount[current] - 1 : 0;
+    renderStep(false);
+  }
+
+  function next() {
+    if (step < stepCount[current] - 1) { step++; renderStep(true); }
+    else goSlide(current + 1, false);
+  }
+
+  function prev() {
+    if (step > 0) { step--; renderStep(false); }
+    else goSlide(current - 1, true);
+  }
+
+  // Every slide starts with all its steps hidden except step 0.
+  slides.forEach(function (s, i) { applyStep(s, effects[i], 0, false); });
+  placeLiquid(0, false);
+  renderStep(false);
+  window.addEventListener('resize', function () { placeLiquid(current, false); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  /* ---------- interactive exercises ---------- */
+
+  document.querySelectorAll('.reveal-btn[data-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (target) target.classList.toggle('show');
+    });
+  });
+})();
+</script>
+</body>
+</html>
