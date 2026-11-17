@@ -19,6 +19,7 @@ from django.urls import path
 from core.views import (
     home_view,
     about_view,
+    product_detail_view,
 )
 from users.views import (
     login_view,
@@ -32,10 +33,11 @@ from social.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home_view),
-    path('about/', about_view),
-    
-    path('blog/', blog_view),
+    path('', home_view, name="home"),
+    path('about/', about_view, name="about-us"),
+    path('products/<int:product_id>/', product_detail_view, name='product_detail'),
+
+    path('blog/', blog_view, name="test"),
     path('friends/', friends_view),
     
     path('login/', login_view),

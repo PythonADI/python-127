@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop 12 — Templates, URLs and Models</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --code-bg: #f5f5f7;
+    --divider: #d2d2d7;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-soft-2: rgba(0, 113, 227, 0.07);
+    --warn: #c2410c;
+    --ok: #1d7a3e;
+    --console-bg: #1d1d1f;
+    --console-text: #f5f5f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vh 9vw;
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: none; }
+  }
+
+  .slide.split {
+    flex-direction: row;
+    align-items: center;
+    gap: 6vw;
+  }
+  .split .content-col {
+    flex: 0 0 auto;
+    width: 34vw;
+  }
+  .split .visual-col {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .title-slide {
+    background: radial-gradient(ellipse at 30% 30%, rgba(0, 113, 227, 0.08), transparent 60%);
+  }
+  .eyebrow {
+    font-size: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  h2 {
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  p.body {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+  p.body b { font-weight: 600; }
+  code.inline {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 18px;
+    padding: 2em 2.2em;
+    width: fit-content;
+    max-width: 46vw;
+    font-size: clamp(17px, 1.5vw, 23px);
+    overflow-x: auto;
+  }
+  pre code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: inherit;
+    line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+  code { font-variant-ligatures: none; }
+
+  table { border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 14px 30px 14px 0;
+    font-size: clamp(17px, 1.5vw, 23px);
+    border-bottom: 1px solid var(--divider);
+  }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td code { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+  #dots {
+    position: fixed;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    height: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--divider); }
+  #liquid {
+    position: absolute;
+    top: 0;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  #stepdots {
+    position: fixed;
+    bottom: 6.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    height: 4px;
+  }
+  #stepdots .sd { width: 4px; height: 4px; border-radius: 50%; background: var(--divider); }
+  #stepdots .sd.done { background: var(--accent); }
+
+  /* ---------- interactive exercises ---------- */
+  .exercise pre.ex-code { margin-top: 1vh; }
+  .reveal-btn {
+    margin-top: 2.4vh;
+    align-self: flex-start;
+    font: inherit;
+    font-size: clamp(15px, 1.3vw, 19px);
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 999px;
+    padding: 0.6em 1.5em;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .reveal-btn:hover { transform: translateY(-1px); }
+  .reveal-btn:active { transform: translateY(0); }
+
+  .ex-answer {
+    margin-top: 0;
+    max-width: 60ch;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+  }
+  .ex-answer.show { opacity: 1; max-height: 20em; margin-top: 2vh; }
+  .ex-answer-line {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(18px, 1.8vw, 26px);
+    font-weight: 600;
+    color: var(--ok);
+    margin-bottom: 0.25em;
+  }
+  .ex-explain {
+    color: var(--text-secondary);
+    font-size: clamp(15px, 1.3vw, 19px);
+    line-height: 1.5;
+    max-width: 55ch;
+    margin-top: 0.6em;
+  }
+
+  .exercise .lead {
+    font-size: clamp(16px, 1.4vw, 21px);
+    color: var(--text-secondary);
+    margin-bottom: 2vh;
+  }
+  table.tight th, table.tight td { padding-top: 8px; padding-bottom: 8px; }
+
+  /* ---------- wide slides: heading on top, windows underneath ---------- */
+  .slide.wide { padding: 6vh 6vw 10vh; }
+  .wide h2 { font-size: clamp(26px, 2.6vw, 40px); margin-bottom: 10px; }
+  .wide p.body { max-width: 70ch; font-size: clamp(16px, 1.4vw, 21px); margin-bottom: 3vh; }
+  .cols { display: grid; gap: 1.8vw; align-items: start; }
+  .cols.c2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cols.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stack { display: flex; flex-direction: column; gap: 1.6vh; min-width: 0; }
+  .step {
+    font-size: clamp(12px, 1vw, 15px);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .verdict { margin-top: 2.4vh; font-size: clamp(16px, 1.4vw, 21px); font-weight: 600; }
+  .verdict .ok { color: var(--ok); }
+  .verdict .no { color: var(--warn); }
+
+  /* ---------- windows: explorer, terminal, editor ---------- */
+  .win {
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: clamp(12px, 1.02vw, 16px);
+    font-variant-ligatures: none;
+    min-width: 0;
+  }
+  .win .bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #f3f3f3;
+    border-bottom: 1px solid var(--divider);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.78em;
+    color: var(--text-secondary);
+  }
+  .win .bar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; flex: none; }
+  .win .bar i + i { background: #febc2e; }
+  .win .bar i + i + i { background: #28c840; }
+  .win .bar span { margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* explorer */
+  .xbody { padding: 0.45em 0; line-height: 1.7; }
+  .xr {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0 0.9em 0 calc(0.7em + var(--d) * 1.15em);
+    white-space: nowrap;
+  }
+  .xr .chev { width: 0.8em; flex: none; color: #8e8e93; text-align: center; }
+  .xr .chev.open { transform: rotate(90deg); }
+  .xr svg { width: 1.05em; height: 1.05em; flex: none; }
+  .xr .nm { overflow: hidden; text-overflow: ellipsis; }
+  .xr.dim .nm, .xr.dim svg { opacity: 0.45; }
+  .xr.hl { background: var(--accent-soft); }
+  .xr .note {
+    margin-left: auto;
+    padding-left: 1.2em;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.86em;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .xr .tag {
+    margin-left: auto;
+    padding: 0 0.55em;
+    border-radius: 999px;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.72em;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .xr .note + .tag { margin-left: 0.6em; }
+  .xr .tag.new { color: var(--ok); background: rgba(29, 122, 62, 0.1); }
+  .xr .tag.changed { color: #a16207; background: rgba(202, 138, 4, 0.13); }
+  .xr .tag.gone { color: var(--warn); background: rgba(194, 65, 12, 0.1); }
+
+  /* terminal */
+  .win.term { background: #1e1e1e; border-color: #2d2d2d; }
+  .win.term .bar { background: #2d2d2d; border-color: #2d2d2d; color: #a0a0a0; }
+  .tbody {
+    padding: 0.8em 1em;
+    color: #c8c8c8;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .tbody .pr { color: #4ec9b0; }
+  .tbody .pr b { color: #c586c0; font-weight: 400; }
+  .tbody .cmd { color: #fff; }
+  .tbody .add { color: #7ee787; }
+  .tbody .err { color: #ff8a65; }
+  .tbody .cm { color: #6a9955; }
+  .tbody .ask { color: #febc2e; font-weight: 700; }
+
+  /* editor */
+  .ebody { display: grid; grid-template-columns: auto 1fr; padding: 0.5em 0; line-height: 1.6; }
+  .ebody .ln { padding: 0 0.9em 0 1em; color: #b0b0b5; text-align: right; user-select: none; }
+  .ebody .tx { padding-right: 1em; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ebody .ln.add, .ebody .tx.add { background: rgba(29, 122, 62, 0.1); }
+  .ebody .ln.hl, .ebody .tx.hl { background: var(--accent-soft); }
+  .ebody .tx.more { color: #b0b0b5; }
+  .eline { display: contents; }
+  /* Numbered by a counter so an inserted line renumbers the ones below it. */
+  .ebody { counter-reset: ln; }
+  .ebody .ln { counter-increment: ln; }
+  .ebody .ln::before { content: counter(ln); }
+  .eline.add > span { background: rgba(29, 122, 62, 0.1); }
+  .eline.hl > span { background: var(--accent-soft); transition: background 0.3s ease; }
+  .tline { min-height: 1.55em; }
+
+  /* ---------- step animations ---------- */
+  /* Anything with data-step stays invisible (but keeps its space, so the
+     slide never jumps) until its step is reached. */
+  [data-step]:not(.shown) { visibility: hidden; }
+  /* Explorer rows and editor lines are inserted instead, like a real
+     explorer, so there are no gaps waiting for them. */
+  .xr[data-step]:not(.shown), .eline[data-step]:not(.shown) { display: none; }
+  /* Windows grow downwards as steps play, so pin these slides to the top
+     instead of centring them — otherwise the heading would jump. */
+  .slide.wide { justify-content: flex-start; padding-top: 10vh; }
+  code.inline { white-space: nowrap; }
+  .pop { animation: pop 0.35s ease both; }
+  .eline.pop > span { animation: pop 0.35s ease both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .xr.pop { animation: rowin 0.9s ease both; }
+  @keyframes rowin {
+    0% { opacity: 0; transform: translateX(-10px); background: rgba(29, 122, 62, 0.2); }
+    30% { opacity: 1; transform: none; background: rgba(29, 122, 62, 0.2); }
+    100% { background: transparent; }
+  }
+  .xr { transition: background 0.3s ease; }
+  .xr .nm { transition: color 0.3s ease; }
+  .xr.gone .nm { color: var(--warn); text-decoration: line-through; }
+  .xr.gone svg { opacity: 0.35; }
+  .tbody .cmd.typing::after {
+    content: '';
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    background: #fff;
+  }
+  .hint {
+    position: fixed;
+    right: 2.2vw;
+    bottom: 3vh;
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .hint.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .pop, .xr.pop, .eline.pop > span { animation: none; }
+    .xr, .xr .nm { transition: none; }
+  }
+
+  /* ---------- syntax highlighting ---------- */
+  .tx .k { color: #ad3da4; font-weight: 600; }
+  .tx .s { color: #c41a16; }
+  .tx .c { color: #8e8e93; font-style: italic; }
+  .tx .f { color: #3e6e9a; font-weight: 600; }
+  .tx .n { color: #1c00cf; }
+  .tx .d { color: #947100; }
+  .tx .t { color: #0b4f79; }
+  .tx .a { color: #947100; }
+  .tx .dj { color: #b35c00; background: rgba(255, 159, 10, 0.13); border-radius: 4px; }
+
+  /* ---------- browser + server diagrams ---------- */
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr));
+    gap: 1.4vw;
+    align-items: stretch;
+    margin-top: 1vh;
+  }
+  .node {
+    position: relative;
+    border: 1.5px solid var(--divider);
+    border-radius: 14px;
+    padding: 1em 1em 1.1em;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    font-size: clamp(13px, 1.1vw, 17px);
+    min-width: 0;
+  }
+  .node .who {
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.5em;
+  }
+  .node code, .node pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .node pre { background: none; padding: 0; border-radius: 0; font-size: 0.95em; line-height: 1.55; max-width: none; white-space: pre-wrap; }
+  .node.client { border-color: #0071e3; }
+  .node.client .who { color: #0071e3; }
+  .node.server { border-color: #1d7a3e; }
+  .node.server .who { color: #1d7a3e; }
+  .node.db { border-color: #b35c00; }
+  .node.db .who { color: #b35c00; }
+  .node:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    right: -1.25vw;
+    top: 50%;
+    transform: translate(50%, -50%);
+    color: var(--text-secondary);
+    font-size: 1.4em;
+  }
+  .zone {
+    display: flex;
+    gap: 2vw;
+    margin-bottom: 1.2vh;
+    font-size: clamp(12px, 1vw, 15px);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .zone span { padding: 0.25em 0.8em; border-radius: 999px; }
+  .zone .zc { color: #0071e3; background: rgba(0, 113, 227, 0.1); }
+  .zone .zs { color: #1d7a3e; background: rgba(29, 122, 62, 0.1); }
+  .zone .zd { color: #b35c00; background: rgba(255, 159, 10, 0.13); }
+  .back {
+    margin-top: 2.2vh;
+    padding: 0.7em 1.2em;
+    border-radius: 12px;
+    background: rgba(0, 113, 227, 0.08);
+    color: #0071e3;
+    font-weight: 600;
+    font-size: clamp(14px, 1.2vw, 18px);
+    width: fit-content;
+  }
+  .mark { background: rgba(255, 214, 10, 0.55); border-radius: 4px; padding: 0 0.15em; font-weight: 700; }
+
+  /* fake browser window */
+  .browser {
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    font-size: clamp(13px, 1.1vw, 17px);
+    min-width: 0;
+  }
+  .browser .bbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #f3f3f3;
+    border-bottom: 1px solid var(--divider);
+  }
+  .browser .bbar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; flex: none; }
+  .browser .bbar i + i { background: #febc2e; }
+  .browser .bbar i + i + i { background: #28c840; }
+  .browser .url {
+    margin-left: 10px;
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--divider);
+    border-radius: 999px;
+    padding: 3px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .browser .url b { color: var(--text-primary); }
+  .bpage { padding: 1em 1.3em 1.3em; font-family: "Times New Roman", serif; }
+  .bpage h3 { font-size: 1.6em; margin: 0.3em 0; }
+  .bpage a { color: #0000ee; text-decoration: underline; }
+  .bpage ul { margin: 0.4em 0 0 1.3em; line-height: 1.6; }
+  .bpage input { font: inherit; padding: 1px 4px; width: 9em; }
+  .bpage button { font: inherit; }
+  .region { position: relative; border: 2px dashed; border-radius: 8px; padding: 0.6em 0.8em; margin-top: 0.8em; }
+  .region .tag {
+    position: absolute;
+    top: -0.75em;
+    right: 0.8em;
+    background: #fff;
+    padding: 0 0.4em;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.72em;
+    font-weight: 700;
+  }
+  .region.base { border-color: #0071e3; }
+  .region.base .tag { color: #0071e3; }
+  .region.page { border-color: #b35c00; }
+  .region.page .tag { color: #b35c00; }
+  .dbt { border-collapse: collapse; width: 100%; }
+  .dbt th, .dbt td { padding: 3px 6px; font-size: 0.9em; border-bottom: 1px solid var(--divider); }
+  .dbt tr.pick td { background: rgba(255, 214, 10, 0.45); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-folder" viewBox="0 0 16 16"><path fill="#dcb67a" d="M1.5 3h4.2l1.5 1.6h7.3v8.9h-13z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path fill="currentColor" d="M3.5 1.5h5.8l3.2 3.2v9.8h-9z"/><path fill="#fff" opacity=".55" d="M9.3 1.5v3.2h3.2z"/></symbol>
+</svg>
+
+<!--
+  How the windows work: each .win holds plain text that the script turns into
+  an explorer, terminal or editor. "@2 " in front of a terminal/editor line, or
+  "@2" inside an explorer row's [flags], makes it appear on step 2 (press → to
+  step). "hl@2", "gone@2", "new@2", "changed@2" switch that effect on at step 2.
+  Any other element can take data-step="2".
+-->
+
+<section class="slide active title-slide">
+  <div class="eyebrow">Workshop 12</div>
+  <h1>Templates, URLs<br>and Models</h1>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>The project roadmap</h2>
+    <p class="body">We keep building <b>the same project</b> in <code class="inline">workshop_11/</code> until Workshop 14.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>#</th><th>Goal</th></tr>
+      <tr><td>11</td><td>Apps, <code>Product</code> model, admin ✅</td></tr>
+      <tr><td><b>12</b></td><td><b>Base template, URLs, detail page, search, blog</b></td></tr>
+      <tr><td>13</td><td>Forms: create, edit, delete</td></tr>
+      <tr><td>14</td><td>Register, login, logout, owners</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>How a page reaches your browser</h2>
+  <p class="body">Every click is a trip: <b>browser &rarr; server &rarr; database</b> and back. Press &rarr; to follow it.</p>
+  <div class="zone"><span class="zc">Browser (your computer)</span><span class="zs">Django server</span><span class="zd">Database</span></div>
+  <div class="flow" style="--n:5">
+    <div class="node client"><div class="who">Browser</div>You open<pre><span class="mark">/</span></pre>It sends <b>GET /</b></div>
+    <div class="node server" data-step="1"><div class="who">urls.py</div><pre>path('',
+  home_view)</pre>finds the view</div>
+    <div class="node server" data-step="2"><div class="who">views.py</div><pre>def home_view(
+    request):</pre>runs your code</div>
+    <div class="node db" data-step="3"><div class="who">db.sqlite3</div><pre>Product
+.objects.all()</pre>gives back rows</div>
+    <div class="node server" data-step="4"><div class="who">index.html</div><pre>{% for p in
+  products %}</pre>fills the template</div>
+  </div>
+  <div class="back" data-step="5">&larr; The server sends back plain <b>HTML</b>. The browser only ever sees HTML &mdash; never your Python.</div>
+</section>
+
+<section class="slide wide">
+  <h2>1. The problem: copy-paste HTML</h2>
+  <p class="body">Every page repeats <code class="inline">&lt;html&gt;</code>, <code class="inline">&lt;head&gt;</code> and the menu. Add one link &rarr; edit <b>every file</b>.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="templates/index.html">
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;Portal&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+    &lt;a href="/about/"&gt;About&lt;/a&gt; [hl@1]
+    &lt;h1&gt;My first web app&lt;/h1&gt;
+    ...
+    </div>
+    <div class="win editor" data-file="templates/about.html">
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;About us&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+    &lt;a href="/"&gt;Home&lt;/a&gt; [hl@1]
+    &lt;h1&gt;About Us&lt;/h1&gt;
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>One base, many pages</h2>
+  <p class="body"><code class="inline">base.html</code> has the skeleton and <b>holes</b> (blocks). Pages <b>extend</b> it and fill only the holes.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="templates/base.html">
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;{% block title %}Portal{% endblock %}&lt;/title&gt; [hl@1]
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;nav&gt;
+    &lt;a href="/"&gt;Home&lt;/a&gt; |
+    &lt;a href="/about/"&gt;About&lt;/a&gt; |
+    &lt;a href="/blog/"&gt;Blog&lt;/a&gt;
+  &lt;/nav&gt;
+  {% block content %}{% endblock %} [hl@2]
+&lt;/body&gt;
+&lt;/html&gt;
+    </div>
+    <div class="win editor" data-file="templates/about.html" data-step="1">
+{% extends "base.html" %}
+
+{% block title %}About us{% endblock %} [hl@1]
+
+{% block content %} [hl@2]
+    &lt;h1&gt;About Us&lt;/h1&gt;
+{% endblock %}
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>What the browser actually gets</h2>
+  <p class="body">Django glues the two files together <b>on the server</b>. The browser receives one normal HTML page.</p>
+  <div class="cols c2">
+    <div class="browser">
+      <div class="bbar"><i></i><i></i><i></i><span class="url">127.0.0.1:8000<b>/about/</b></span></div>
+      <div class="bpage">
+        <div class="region base" data-step="1"><span class="tag">from base.html</span>
+          <a>Home</a> | <a>About</a> | <a>Blog</a>
+        </div>
+        <div class="region page" data-step="2"><span class="tag">from about.html &rarr; block content</span>
+          <h3>About Us</h3>
+        </div>
+      </div>
+    </div>
+    <div class="win editor" data-file="view-source: about.html (what the server sent)" data-step="3">
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;About us&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;nav&gt;
+    &lt;a href="/"&gt;Home&lt;/a&gt; | ...
+  &lt;/nav&gt;
+  &lt;h1&gt;About Us&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+    </div>
+  </div>
+  <p class="verdict" data-step="4"><span class="ok">No {% block %} in the browser &mdash; Django already replaced it.</span></p>
+</section>
+
+<section class="slide wide">
+  <h2>2. Named URLs</h2>
+  <p class="body">Give every path a <b>name</b>. Templates ask for the name, Django fills in the address.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="workshop_11/urls.py">
+urlpatterns = [
+    path('admin/', admin.site.urls),
++     path('', home_view, name="home"),
++     path('about/', about_view, name="about"),
++     path('blog/', blog_view, name="blog"),
+    ...
+]
+    </div>
+    <div class="win editor" data-file="templates/base.html" data-step="1">
+&lt;nav&gt;
++   &lt;a href="{% url 'home' %}"&gt;Home&lt;/a&gt;
++   &lt;a href="{% url 'about' %}"&gt;About&lt;/a&gt;
++   &lt;a href="{% url 'blog' %}"&gt;Blog&lt;/a&gt;
+&lt;/nav&gt;
+    </div>
+  </div>
+  <p class="verdict" data-step="2"><span class="ok">✓ Change 'about/' to 'about-us/' &mdash; every link still works.</span></p>
+</section>
+
+<section class="slide wide">
+  <h2>3. A page for each product</h2>
+  <p class="body">The number in the URL becomes <code class="inline">pk</code> and goes into the view.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="workshop_11/urls.py">
+path('products/&lt;int:pk&gt;/', product_detail_view, [hl@1]
+     name="product_detail"),
+    </div>
+    <div class="win editor" data-file="core/views.py" data-step="1">
+from django.shortcuts import render, get_object_or_404
+
+def product_detail_view(request, pk): [hl@1]
+    product = get_object_or_404(Product, pk=pk) [hl@2]
+    return render(request, "product_detail.html",
+                  {"product": product})
+    </div>
+  </div>
+  <p class="verdict" data-step="3"><span class="ok">✓ /products/1/ &rarr; product 1</span>&nbsp;&nbsp;<span class="no">/products/999/ &rarr; 404, not a crash</span></p>
+</section>
+
+<section class="slide wide">
+  <h2>Follow the number</h2>
+  <p class="body">The <span class="mark">1</span> travels from the address bar all the way to the database row.</p>
+  <div class="zone"><span class="zc">Browser</span><span class="zs">Django server</span><span class="zd">Database</span></div>
+  <div class="flow" style="--n:5">
+    <div class="node client"><div class="who">Address bar</div><pre>/products/<span class="mark">1</span>/</pre></div>
+    <div class="node server" data-step="1"><div class="who">urls.py</div><pre>products/
+&lt;int:pk&gt;/</pre>pk = <span class="mark">1</span></div>
+    <div class="node server" data-step="2"><div class="who">views.py</div><pre>get_object_or_404(
+  Product, pk=<span class="mark">1</span>)</pre></div>
+    <div class="node db" data-step="3"><div class="who">core_product</div>
+      <table class="dbt"><tr><th>id</th><th>name</th><th>price</th></tr>
+      <tr class="pick"><td>1</td><td>Milk</td><td>3.20</td></tr>
+      <tr><td>2</td><td>Bread</td><td>1.50</td></tr></table></div>
+    <div class="browser" data-step="4">
+      <div class="bbar"><i></i><i></i><i></i></div>
+      <div class="bpage"><h3>Milk</h3>3.20 Lari<br><small>Fresh milk</small></div>
+    </div>
+  </div>
+  <div class="back" data-step="5">/products/<b>999</b>/ &rarr; no row with id 999 &rarr; <b>404 Not Found</b></div>
+</section>
+
+<section class="slide wide">
+  <h2>Link to it from the list</h2>
+  <p class="body"><code class="inline">{% url %}</code> takes the name <b>and</b> the value for <code class="inline">pk</code>.</p>
+  <div class="win editor" data-file="templates/index.html">
+{% for product in products %}
++     &lt;li&gt;&lt;a href="{% url 'product_detail' product.pk %}"&gt;
++         {{ product.name }}
++     &lt;/a&gt; - {{ product.price }} Lari&lt;/li&gt;
+{% endfor %}
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>4. Search</h2>
+  <p class="body">A <code class="inline">GET</code> form puts the text into the URL: <code class="inline">/?search=milk</code>. The view reads it from <code class="inline">request.GET</code>.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="templates/index.html">
+&lt;form method="get"&gt;
+    &lt;input name="search" value="{{ search }}"&gt; [hl@1]
+    &lt;button&gt;Search&lt;/button&gt;
+&lt;/form&gt;
+
+{% for product in products %}
+    ...
+{% empty %} [hl@3]
+    &lt;li&gt;No products found.&lt;/li&gt;
+{% endfor %}
+    </div>
+    <div class="win editor" data-file="core/views.py" data-step="1">
+def home_view(request):
+    search = request.GET.get("search", "") [hl@1]
+    products = Product.objects.all()
+    if search:
+        products = products.filter(name__icontains=search) [hl@2]
+    return render(request, "index.html",
+                  {"products": products, "search": search})
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>Where does the search text go?</h2>
+  <p class="body">The form copies the input into the <b>URL</b>. Django reads it from <code class="inline">request.GET</code>.</p>
+  <div class="zone"><span class="zc">Browser</span><span class="zs">Django server</span><span class="zd">Database</span></div>
+  <div class="flow" style="--n:4">
+    <div class="browser">
+      <div class="bbar"><i></i><i></i><i></i><span class="url">127.0.0.1:8000<b>/?search=<span class="mark">milk</span></b></span></div>
+      <div class="bpage"><input value="milk"> <button>Search</button></div>
+    </div>
+    <div class="node server" data-step="1"><div class="who">views.py</div><pre>request.GET
+.get("search")
+&rarr; "<span class="mark">milk</span>"</pre></div>
+    <div class="node db" data-step="2"><div class="who">db.sqlite3</div><pre>filter(name__
+icontains="<span class="mark">milk</span>")</pre>
+      <table class="dbt"><tr class="pick"><td>Milk</td></tr><tr class="pick"><td>Chocolate milk</td></tr><tr><td><s>Bread</s></td></tr></table></div>
+    <div class="browser" data-step="3">
+      <div class="bbar"><i></i><i></i><i></i></div>
+      <div class="bpage"><ul><li><a>Milk</a> - 3.20 Lari</li><li><a>Chocolate milk</a> - 4.10 Lari</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide exercise">
+  <h2>Try it &mdash; predict the result</h2>
+  <p class="lead">Products: <code class="inline">Milk</code>, <code class="inline">Chocolate milk</code>, <code class="inline">Bread</code>. What does <code class="inline">/?search=MILK</code> show?</p>
+  <pre class="ex-code"><code>products.filter(name__icontains=search)</code></pre>
+  <button class="reveal-btn" data-target="ex1-answer">Reveal answer</button>
+  <div class="ex-answer" id="ex1-answer">
+    <div class="ex-answer-line">&rarr; Milk, Chocolate milk</div>
+    <p class="ex-explain"><code class="inline">icontains</code> = "contains, ignoring upper/lower case". <code class="inline">exact</code> would only match a name that is exactly "MILK".</p>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>5. Make the admin readable</h2>
+  <p class="body"><code class="inline">__str__</code> replaces "Product object (1)". <code class="inline">ModelAdmin</code> adds columns and a search box.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="core/models.py">
+class Product(models.Model):
+    name = models.CharField(max_length=60)
+    ...
++     class Meta:
++         ordering = ["name"]
++     def __str__(self):
++         return self.name
+    </div>
+    <div class="win editor" data-file="core/admin.py" data-step="1">
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ["name", "price", "expiry_date"] [hl@1]
+    search_fields = ["name"] [hl@2]
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>6. Blog posts &mdash; on your own</h2>
+  <p class="body">Same recipe as <code class="inline">Product</code>: <b>model &rarr; migrate &rarr; admin &rarr; view &rarr; template</b>.</p>
+  <div class="cols c2">
+    <div class="win editor" data-file="social/models.py">
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True) [hl@1]
+
+    class Meta:
+        ordering = ["-created_at"] [hl@2]
+
+    def __str__(self):
+        return self.title
+    </div>
+    <div class="win term" data-cwd="~/workshop_11" data-step="2">
+@3 $ uv run python manage.py makemigrations
+@3 Migrations for 'social':
+@3   social/migrations/0001_initial.py
+@3     + Create model Post
+@4 $ uv run python manage.py migrate
+@4 Applying social.0001_initial... OK
+    </div>
+  </div>
+</section>
+
+<section class="slide wide">
+  <h2>From admin to /blog/</h2>
+  <p class="body">You add a post in the admin &rarr; it is saved as a <b>row</b> &rarr; <code class="inline">blog_view</code> reads the rows &rarr; the browser shows them.</p>
+  <div class="flow" style="--n:3">
+    <div class="browser">
+      <div class="bbar"><i></i><i></i><i></i><span class="url">127.0.0.1:8000<b>/admin/social/post/add/</b></span></div>
+      <div class="bpage">Title: <input value="Hello world"><br><br><button>Save</button></div>
+    </div>
+    <div class="node db" data-step="1"><div class="who">social_post</div>
+      <table class="dbt"><tr><th>id</th><th>title</th><th>created_at</th></tr>
+      <tr class="pick"><td>3</td><td>Hello world</td><td>Nov 17</td></tr>
+      <tr><td>2</td><td>Django tips</td><td>Nov 15</td></tr>
+      <tr><td>1</td><td>First post</td><td>Nov 10</td></tr></table></div>
+    <div class="browser" data-step="2">
+      <div class="bbar"><i></i><i></i><i></i><span class="url">127.0.0.1:8000<b>/blog/</b></span></div>
+      <div class="bpage"><h3>Blog</h3><ul><li><b>Hello world</b></li><li>Django tips</li><li>First post</li></ul></div>
+    </div>
+  </div>
+  <div class="back" data-step="3">Newest on top because of <code>ordering = ["-created_at"]</code></div>
+</section>
+
+<section class="slide split">
+  <div class="content-col">
+    <h2>Homework</h2>
+    <p class="body">Finish today's tasks, then grow <code class="inline">Product</code>. Details in <code class="inline">docs/workshop_12.md</code>.</p>
+  </div>
+  <div class="visual-col">
+    <table>
+      <tr><th>#</th><th>Task</th></tr>
+      <tr><td>1</td><td><code>Category</code> model + <code>ForeignKey</code> on Product</td></tr>
+      <tr><td>2</td><td>Show category on the detail page</td></tr>
+      <tr><td>3</td><td>Filter by category: <code>/?category=3</code></td></tr>
+      <tr><td>4</td><td>Mark expired products <b>(expired)</b></td></tr>
+    </table>
+  </div>
+</section>
+
+
+<div id="stepdots"></div>
+<div id="dots"></div>
+<div class="hint" id="hint">press → to play the next step</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  /* ============================================================
+     WINDOWS — each .win holds plain text that is turned into an
+     explorer, terminal or editor when the page loads.
+     ============================================================ */
+
+  function lines(node) {
+    var all = node.textContent.split('\n');
+    while (all.length && !all[0].trim()) all.shift();
+    while (all.length && !all[all.length - 1].trim()) all.pop();
+    return all;
+  }
+
+  // "@2 rest" → [2, "rest"]; a line without a marker belongs to step 0.
+  function stepOf(raw) {
+    var m = raw.match(/^@(\d+) /);
+    return m ? [Number(m[1]), raw.slice(m[0].length)] : [0, raw];
+  }
+
+  // Effects that switch on at a later step are stored as "cls@step cls@step".
+  function addLater(node, cls, step) {
+    var list = node.getAttribute('data-on');
+    node.setAttribute('data-on', (list ? list + ' ' : '') + cls + '@' + step);
+  }
+
+  function bar(title) {
+    var b = el('div', 'bar');
+    b.appendChild(el('i'));
+    b.appendChild(el('i'));
+    b.appendChild(el('i'));
+    b.appendChild(el('span', '', title));
+    return b;
+  }
+
+  var FILE_COLORS = {
+    py: '#3572a5', toml: '#9c4221', lock: '#8e8e93', md: '#519aba', exe: '#6e6e73',
+    cfg: '#8e8e93', html: '#e44d26', gitignore: '#f05133', txt: '#8e8e93'
+  };
+
+  function icon(id, color) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + id);
+    svg.appendChild(use);
+    if (color) svg.style.color = color;
+    return svg;
+  }
+
+  // One line per entry: two spaces of indent per level, a trailing "/" for a
+  // folder, optional [flags], optional "# note". Flags: closed dim hl new
+  // changed gone, "@2" (row appears on step 2), "hl@2" (effect from step 2).
+  function buildExplorer(win) {
+    var body = el('div', 'xbody');
+    lines(win).forEach(function (raw) {
+      var note = '';
+      var hash = raw.indexOf(' # ');
+      if (hash >= 0) { note = raw.slice(hash + 3).trim(); raw = raw.slice(0, hash); }
+      var flags = [];
+      raw = raw.replace(/\[([^\]]*)\]/, function (_, f) { flags = f.trim().split(/\s+/); return ''; });
+      var depth = raw.match(/^ */)[0].length / 2;
+      var name = raw.trim();
+      var isDir = name.charAt(name.length - 1) === '/';
+      if (isDir) name = name.slice(0, -1);
+      var has = function (f) { return flags.indexOf(f) >= 0; };
+
+      var row = el('div', 'xr' + (has('dim') ? ' dim' : '') + (has('hl') ? ' hl' : ''));
+      row.style.setProperty('--d', depth);
+      row.appendChild(el('span', 'chev' + (isDir && !has('closed') ? ' open' : ''), isDir ? '›' : ''));
+      var ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.') + 1) : '';
+      row.appendChild(isDir ? icon('i-folder') : icon('i-file', FILE_COLORS[ext] || '#8e8e93'));
+      row.appendChild(el('span', 'nm', name));
+
+      var noteStep = null;
+      flags.forEach(function (f) {
+        var m = f.match(/^(\w*)@(\d+)$/);
+        if (!m) return;
+        var step = Number(m[2]);
+        if (!m[1]) row.setAttribute('data-step', step);
+        else if (m[1] === 'hl' || m[1] === 'gone') {
+          addLater(row, m[1], step);
+          if (m[1] === 'hl') noteStep = step;
+        }
+      });
+
+      if (note) {
+        var n = el('span', 'note', note);
+        if (noteStep !== null) n.setAttribute('data-step', noteStep);
+        row.appendChild(n);
+      }
+      ['new', 'changed', 'gone'].forEach(function (t) {
+        var later = flags.filter(function (f) { return f.indexOf(t + '@') === 0; })[0];
+        if (!has(t) && !later) return;
+        var tag = el('span', 'tag ' + t, t);
+        if (later) tag.setAttribute('data-step', later.split('@')[1]);
+        row.appendChild(tag);
+      });
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  // "$ cmd" is typed at the prompt (cd updates the prompt's folder, activate
+  // adds "(.venv)"), "! line" is an error, "# line" is a comment, " + pkg"
+  // is an install line; everything else is plain output.
+  function buildTerminal(win) {
+    var body = el('div', 'tbody');
+    var cwd = win.getAttribute('data-cwd') || '~';
+    var venv = false;
+    lines(win).forEach(function (line) {
+      var parsed = stepOf(line);
+      var raw = parsed[1];
+      var row = el('div', 'tline');
+      if (parsed[0]) row.setAttribute('data-step', parsed[0]);
+      if (raw.charAt(0) === '$') {
+        var cmd = raw.slice(2);
+        var pr = el('span', 'pr');
+        if (venv) pr.appendChild(el('b', '', '(.venv) '));
+        pr.appendChild(document.createTextNode(cwd + ' $ '));
+        row.appendChild(pr);
+        if (cmd) row.appendChild(el('span', 'cmd', cmd));
+        var cd = cmd.match(/^cd (.+)$/);
+        if (cd) {
+          cd[1].split('/').forEach(function (part) {
+            if (part === '..') cwd = cwd.slice(0, cwd.lastIndexOf('/'));
+            else cwd += '/' + part;
+          });
+        }
+        if (/activate$/.test(cmd)) venv = true;
+        if (cmd === 'deactivate') venv = false;
+      } else if (raw.charAt(0) === '!') {
+        row.appendChild(el('span', 'err', raw.slice(2)));
+      } else if (raw.charAt(0) === '#') {
+        row.appendChild(el('span', 'cm', raw));
+      } else if (raw === '?') {
+        row.appendChild(el('span', 'ask', '?'));
+      } else if (/^ \+ /.test(raw)) {
+        row.appendChild(el('span', 'add', raw));
+      } else {
+        row.textContent = raw;
+      }
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  // "+ line" is newly added, "..." means "more below", a trailing
+  // "[hl@2]" highlights the line from step 2.
+
+  // Colour Python and Django-template code in editor windows.
+  var PY = /(#.*$)|("[^"]*"|'[^']*')|\b(def|class|return|if|else|elif|for|in|from|import|and|or|not|None|True|False)\b|(@[\w.]+)|\b(\d+)\b|\b([A-Za-z_]\w*)(?=\()/g;
+  var HTML = /(\{%.*?%\}|\{\{.*?\}\})|(<\/?[\w-]+|\/?>)|([\w-]+)(?==)|("[^"]*")/g;
+
+  function highlight(tx, raw, lang) {
+    var re = lang === 'py' ? PY : lang === 'html' ? HTML : null;
+    if (!re) { tx.textContent = raw; return; }
+    var py = lang === 'py' ? ['c', 's', 'k', 'd', 'n', 'f'] : ['dj', 't', 'a', 's'];
+    var last = 0;
+    re.lastIndex = 0;
+    raw.replace(re, function (m) {
+      var at = arguments[arguments.length - 2];
+      var groups = Array.prototype.slice.call(arguments, 1, arguments.length - 2);
+      tx.appendChild(document.createTextNode(raw.slice(last, at)));
+      var g = groups.findIndex(function (x) { return x !== undefined; });
+      tx.appendChild(el('span', py[g], m));
+      last = at + m.length;
+      return m;
+    });
+    tx.appendChild(document.createTextNode(raw.slice(last)));
+  }
+
+  function buildEditor(win) {
+    var body = el('div', 'ebody');
+    var file = win.getAttribute('data-file') || '';
+    var lang = /\.py\b/.test(file) ? 'py' : /\.html\b/.test(file) ? 'html' : '';
+    lines(win).forEach(function (line) {
+      var parsed = stepOf(line);
+      var raw = parsed[1];
+      var row = el('div', 'eline');
+      if (parsed[0]) row.setAttribute('data-step', parsed[0]);
+      raw = raw.replace(/ \[hl@(\d+)\]$/, function (_, s) { addLater(row, 'hl', Number(s)); return ''; });
+      if (/^\+ /.test(raw)) { row.classList.add('add'); raw = raw.slice(2); }
+      var tx = el('span', 'tx');
+      if (raw.trim() === '...') { tx.classList.add('more'); tx.textContent = raw; }
+      else highlight(tx, raw, lang);
+      row.appendChild(el('span', 'ln'));
+      row.appendChild(tx);
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  document.querySelectorAll('.win').forEach(function (win) {
+    var body, title;
+    if (win.classList.contains('explorer')) { body = buildExplorer(win); title = win.getAttribute('data-title'); }
+    else if (win.classList.contains('term')) { body = buildTerminal(win); title = 'Terminal'; }
+    else { body = buildEditor(win); title = win.getAttribute('data-file'); }
+    win.textContent = '';
+    win.appendChild(bar(title));
+    win.appendChild(body);
+  });
+
+  /* ============================================================
+     STEPS — on each step, everything marked for that step plays in
+     page order: commands type themselves, then their output and the
+     explorer/editor changes follow one after another.
+     ============================================================ */
+
+  function effectsOf(slide) {
+    var list = [];
+    slide.querySelectorAll('[data-step], [data-on]').forEach(function (node) {
+      if (node.hasAttribute('data-step')) {
+        list.push({ node: node, step: Number(node.getAttribute('data-step')), cls: null });
+      }
+      (node.getAttribute('data-on') || '').split(' ').filter(Boolean).forEach(function (pair) {
+        var p = pair.split('@');
+        list.push({ node: node, step: Number(p[1]), cls: p[0] });
+      });
+    });
+    return list;
+  }
+
+  var timers = [];
+  var typing = [];
+
+  function cancelTimers() {
+    timers.forEach(window.clearTimeout);
+    timers = [];
+    typing.forEach(function (cmd) { cmd.textContent = cmd.getAttribute('data-full'); cmd.classList.remove('typing'); });
+    typing = [];
+  }
+
+  function later(ms, fn) { timers.push(window.setTimeout(fn, ms)); }
+
+  function typeCommand(cmd) {
+    var full = cmd.getAttribute('data-full') || cmd.textContent;
+    cmd.setAttribute('data-full', full);
+    var per = Math.min(32, 700 / full.length);
+    cmd.textContent = '';
+    cmd.classList.add('typing');
+    typing.push(cmd);
+    for (var i = 1; i <= full.length; i++) {
+      (function (n) {
+        later(n * per, function () {
+          cmd.textContent = full.slice(0, n);
+          if (n === full.length) {
+            cmd.classList.remove('typing');
+            typing.splice(typing.indexOf(cmd), 1);
+          }
+        });
+      })(i);
+    }
+    return full.length * per;
+  }
+
+  function setEffect(e, on) {
+    if (e.cls) e.node.classList.toggle(e.cls, on);
+    else {
+      e.node.classList.toggle('shown', on);
+      if (!on) e.node.classList.remove('pop');
+    }
+  }
+
+  function playEffect(e) {
+    setEffect(e, true);
+    if (!e.cls) {
+      e.node.classList.remove('pop');
+      void e.node.offsetWidth; // restart the animation
+      e.node.classList.add('pop');
+    }
+  }
+
+  function applyStep(slide, effects, step, animate) {
+    cancelTimers();
+    effects.forEach(function (e) {
+      var on = e.step <= step;
+      if (!(animate && e.step === step)) setEffect(e, on);
+      else if (!e.cls) setEffect(e, false);
+    });
+    if (!animate) return;
+
+    var t = 0;
+    effects.forEach(function (e) {
+      if (e.step !== step || !e.step) return;
+      var cmd = !e.cls && e.node.classList.contains('tline') ? e.node.querySelector('.cmd') : null;
+      later(t, function () {
+        if (cmd && !reduceMotion) typeCommand(cmd);
+        playEffect(e);
+      });
+      if (cmd && !reduceMotion) {
+        var full = cmd.getAttribute('data-full') || cmd.textContent;
+        t += full.length * Math.min(32, 700 / full.length) + 250;
+      } else {
+        t += reduceMotion ? 0 : 110;
+      }
+    });
+  }
+
+  /* ---------- slide / step navigation ---------- */
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var effects = slides.map(effectsOf);
+  var stepCount = effects.map(function (list) {
+    return list.reduce(function (m, e) { return Math.max(m, e.step); }, 0) + 1;
+  });
+
+  var current = 0;
+  var step = 0;
+
+  var dotsContainer = document.getElementById('dots');
+  slides.forEach(function () { dotsContainer.appendChild(el('div', 'dot')); });
+  var dots = Array.prototype.slice.call(dotsContainer.querySelectorAll('.dot'));
+
+  var DOT_SIZE = 7;
+  var liquid = el('div');
+  liquid.id = 'liquid';
+  dotsContainer.appendChild(liquid);
+  var liquidTimer = null;
+  var stepDots = document.getElementById('stepdots');
+  var hint = document.getElementById('hint');
+
+  function dotLeft(i) { return dots[i].offsetLeft; }
+
+  function placeLiquid(i, animate) {
+    var targetLeft = dotLeft(i);
+
+    // Cancel any pending Phase 2 from an interrupted transition — otherwise
+    // it fires later and snaps the indicator back to a stale target.
+    if (liquidTimer !== null) {
+      window.clearTimeout(liquidTimer);
+      liquidTimer = null;
+    }
+
+    if (!animate || reduceMotion) {
+      liquid.style.transition = 'none';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+      liquid.offsetHeight; // flush the style change before re-enabling transitions
+      liquid.style.transition = '';
+      return;
+    }
+
+    // Phase 1: stretch into a liquid bridge spanning the old and new positions.
+    var fromLeft = parseFloat(getComputedStyle(liquid).left) || dotLeft(current);
+    var bridgeLeft = Math.min(fromLeft, targetLeft);
+    var bridgeWidth = Math.abs(targetLeft - fromLeft) + DOT_SIZE;
+
+    liquid.style.transition = 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)';
+    liquid.style.left = bridgeLeft + 'px';
+    liquid.style.width = bridgeWidth + 'px';
+
+    // Phase 2: spring back into a droplet at the new dot.
+    liquidTimer = window.setTimeout(function () {
+      liquidTimer = null;
+      liquid.style.transition = 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      liquid.style.left = targetLeft + 'px';
+      liquid.style.width = DOT_SIZE + 'px';
+    }, 220);
+  }
+
+  function renderStepDots() {
+    stepDots.innerHTML = '';
+    var n = stepCount[current];
+    hint.classList.toggle('on', n > 1 && step < n - 1);
+    if (n <= 1) return;
+    for (var i = 0; i < n; i++) stepDots.appendChild(el('div', 'sd' + (i <= step ? ' done' : '')));
+  }
+
+  function renderStep(animate) {
+    applyStep(slides[current], effects[current], step, animate);
+    renderStepDots();
+  }
+
+  function goSlide(i, backwards) {
+    slides[current].classList.remove('active');
+    var next = (i + slides.length) % slides.length;
+    slides[next].classList.add('active');
+    placeLiquid(next, true);
+    current = next;
+    step = backwards ? stepCount[current] - 1 : 0;
+    renderStep(false);
+  }
+
+  function next() {
+    if (step < stepCount[current] - 1) { step++; renderStep(true); }
+    else goSlide(current + 1, false);
+  }
+
+  function prev() {
+    if (step > 0) { step--; renderStep(false); }
+    else goSlide(current - 1, true);
+  }
+
+  // Every slide starts with all its steps hidden except step 0.
+  slides.forEach(function (s, i) { applyStep(s, effects[i], 0, false); });
+  placeLiquid(0, false);
+  renderStep(false);
+  window.addEventListener('resize', function () { placeLiquid(current, false); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  /* ---------- interactive exercises ---------- */
+
+  document.querySelectorAll('.reveal-btn[data-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (target) target.classList.toggle('show');
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,18 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=viewport, initial-scale=1.0">
-    <title>Portal</title>
-</head>
-<body>
-    <a href="/about/">About</a>
+{% extends "base.html" %}
+{% block title %}Portal{% endblock  %}
+
+{% block content %}
     <h1>My first web app</h1>
 
     <ul>
         {% for product in products %}
-            <li>{{ product.name }} - {{ product.price }} Lari</li>
+            <li>
+                <a
+                    href="{% url 'product_detail' product.id %}"
+                >
+                    {{ product.name }}
+                </a>
+                - {{ product.price }} Lari
+            </li>
         {% endfor %}
     </ul>
-</body>
-</html>
+{% endblock  %}

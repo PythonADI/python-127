@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from core.models import Product
 
 def home_view(request):
@@ -23,3 +23,14 @@ def home_view(request):
 
 def about_view(request):
     return render(request, "about.html")
+
+
+def product_detail_view(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return render(
+        request,
+        "product_detail.html",
+        {
+            "product": product
+        }
+    )
