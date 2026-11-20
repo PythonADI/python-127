@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf.urls.static import static
+from django.conf import settings
 from core.views import (
     home_view,
     about_view,
@@ -34,8 +36,8 @@ from social.views import (
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name="home"),
-    path('about/', about_view, name="about-us"),
-    path('products/<int:product_id>/', product_detail_view, name='product_detail'),
+    path('about-us/', about_view, name="about-us"),
+    path('products/<slug:slug>/', product_detail_view, name='product_detail'),
 
     path('blog/', blog_view, name="test"),
     path('friends/', friends_view),

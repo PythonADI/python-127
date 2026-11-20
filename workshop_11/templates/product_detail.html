@@ -5,11 +5,21 @@
 
 
 {% block content %}
-    <h1>{{ product.name }}</h1>
+    <article class="product-detail">
+        <div class="thumb">🥖</div>
 
-    <p>Price: {{ product.price }} Lari</p>
-    <p>Production date: {{ product.production_date }}</p>
-    <p>Expiry date: {{ product.expiry_date }}</p>
-    <p>{{ product.description }}</p>
+        <div>
+            <h1>{{ product.name }}</h1>
+            <span class="price">{{ product.price }} Lari</span>
+
+            <ul class="meta">
+                <li><strong>Production date:</strong> {{ product.production_date }}</li>
+                <li><strong>Expiry date:</strong> {{ product.expiry_date }}</li>
+            </ul>
+
+            <p>{{ product.description }}</p>
+
+            <a class="back" href="{% url 'home' %}">&larr; Back to all products</a>
+        </div>
+    </article>
 {% endblock  %}
-

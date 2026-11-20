@@ -25,8 +25,8 @@ def about_view(request):
     return render(request, "about.html")
 
 
-def product_detail_view(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+def product_detail_view(request, slug):
+    product = get_object_or_404(Product, slug=slug)
     return render(
         request,
         "product_detail.html",

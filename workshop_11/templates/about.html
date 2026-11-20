@@ -1,10 +1,22 @@
 {% extends "base.html" %}
+{% load static %}
 
 
 {% block title %}About Us{% endblock %}
 
-{% block content %}
-    <h1>About Us</h1>
+{% block styles %}
+<link rel="stylesheet" href="{% static 'about.css' %}">
+{% endblock %}
 
-    <p>here are details about us</p>
+{% block content %}
+    <section class="hero">
+        <h1>About Us</h1>
+        <p>A small neighbourhood bakery with a big love for good bread.</p>
+    </section>
+
+    <div class="about-grid">
+        <div class="about-card"><span>🌾</span><h3>Quality ingredients</h3><p>We use local flour and natural starters.</p></div>
+        <div class="about-card"><span>⏰</span><h3>Baked daily</h3><p>Everything on the shelf was made this morning.</p></div>
+        <div class="about-card"><span>❤️</span><h3>Made with care</h3><p>Traditional recipes, shaped by hand.</p></div>
+    </div>
 {% endblock  %}

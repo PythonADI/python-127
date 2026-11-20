@@ -2,18 +2,32 @@
 {% block title %}Portal{% endblock  %}
 
 {% block content %}
-    <h1>My first web app</h1>
+    <section class="hero">
+        <h1>Fresh from our oven</h1>
+        <p>Handmade bread and pastries, baked every morning.</p>
+    </section>
 
-    <ul>
+    <h2 class="section-title">Our products</h2>
+
+    {% if products %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
         {% for product in products %}
-            <li>
-                <a
-                    href="{% url 'product_detail' product.id %}"
-                >
-                    {{ product.name }}
-                </a>
-                - {{ product.price }} Lari
-            </li>
+        <div class="col">
+            <div class="card h-100 shadow-sm product-card">
+                <div class="card-img-top thumb">🥖</div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text text-body-secondary small flex-grow-1">{{ product.description|truncatechars:90 }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="price fs-5">{{ product.price }} ₾</span>
+                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-accent stretched-link">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
+    {% else %}
+        <div class="alert alert-light border text-center empty">No products yet. Check back soon!</div>
+    {% endif %}
 {% endblock  %}
