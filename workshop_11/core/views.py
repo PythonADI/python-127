@@ -8,15 +8,23 @@ def home_view(request):
     # print(request.method)
     # print(request.GET)
     # print(request.GET.get("search"))
-    products = Product.objects.all()
-    
-    for product in products:
-        print(product.name)
+    q = request.GET.get("q")
+    start_date = request.GET.get("start")
+    end_date = request.GET.get("end")
+
+    if q:
+        products = Product.objects.filter(name__icontains=q)
+    else:
+        products = Product.objects.all()
+        
+    if start_date and end_date:
+        products = products.filter(expiry_date__gte=start_date, expiry_date__lte=end_date)
+
     return render(
         request,
         "index.html", 
         {
-            "products": products
+            "products": products,
         }
     )
 

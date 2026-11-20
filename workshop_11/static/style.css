@@ -196,3 +196,48 @@ footer {
 .site-nav .nav-link.active { background: var(--accent); color: #fff; }
 .site-nav .navbar-toggler { border-color: var(--border); }
 @media (prefers-color-scheme: dark) { .site-nav .navbar-toggler-icon { filter: invert(1); } }
+
+
+/* Date filter */
+.date-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+}
+.date-filter input[type="date"] {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .2s, box-shadow .2s;
+}
+.date-filter input[type="date"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(192, 85, 58, 0.15);
+}
+.date-filter button {
+    border: 0;
+    border-radius: 10px;
+    padding: 7px 18px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    text-transform: capitalize;
+    transition: background .2s;
+}
+.date-filter button:hover { background: var(--accent-dark); }
+.date-filter .reset {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+.date-filter .reset:hover { color: var(--accent-dark); text-decoration: underline; }
